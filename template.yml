@@ -1,0 +1,16 @@
+---
+default:
+  output_dir: "<absolute_path>"
+  data_path: "<absolute_path_to_raw_portfolios>"
+  project_code: "PA2022XX"
+  default_language: "EN"
+  project_prefix: "PA2022XX"
+  holdings_date: "2021Q4"
+  bogus_csvs_to_be_ignored:
+  # yaml list
+  # - 1
+  # - 2
+  users_to_be_ignored:
+  # yaml list
+  # - 1
+  # - 2

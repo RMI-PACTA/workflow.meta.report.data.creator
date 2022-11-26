@@ -8,6 +8,7 @@ suppressPackageStartupMessages({
   require(stringi, quietly = TRUE)
   require(wand, quietly = TRUE)
   require(stringr, quietly = TRUE)
+  require(pacta.portfolio.import, quietly = TRUE) # must install with # devtools::install_github("RMI-PACTA/pacta.portfolio.import")
   require(pacta.portfolio.analysis, quietly = TRUE) # must install with # devtools::install_github("RMI-PACTA/pacta.portfolio.analysis")
 
   library(dplyr, warn.conflicts = FALSE)

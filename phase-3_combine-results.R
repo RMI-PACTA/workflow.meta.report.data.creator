@@ -1,5 +1,4 @@
 library("tidyverse")
-library("config")
 
 cfg <- config::get(file = commandArgs(trailingOnly = TRUE))
 

@@ -18,7 +18,6 @@ suppressPackageStartupMessages({
   library(r2dii.utils)  # must install with # devtools::install_github("2DegreesInvesting/r2dii.utils")
   library(readr)
   library(yaml)
-  library(config)
   library(here)
 })
 

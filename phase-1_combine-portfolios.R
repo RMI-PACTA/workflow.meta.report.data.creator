@@ -23,8 +23,6 @@ suppressPackageStartupMessages({
 
 cfg <- config::get(file = commandArgs(trailingOnly = TRUE))
 
-source(here::here("R", "get_csv_specs.R"))
-
 
 # manually set certain values and paths ----------------------------------------
 

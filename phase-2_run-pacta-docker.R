@@ -4,7 +4,6 @@ library("purrr")
 library("tidyr")
 library("fs")
 library("here")
-library("config")
 
 
 cfg <- config::get(file = commandArgs(trailingOnly = TRUE))

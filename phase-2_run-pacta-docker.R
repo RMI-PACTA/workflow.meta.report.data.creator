@@ -8,6 +8,15 @@ source(here("R", "detect_pacta_directories.R"))
 
 cfg <- config::get(file = commandArgs(trailingOnly = TRUE))
 
+if (is.null(cfg$docker_image)) {
+  cfg$docker_image <- "transitionmonitordockerregistry.azurecr.io/rmi_pacta"
+}
+
+if (is.null(cfg$docker_tag)) {
+  cfg$docker_tag <- "latest"
+}
+
+
 script_path <- here(
   "transitionmonitor_docker",
   "run-like-constructiva-flags.sh"
@@ -51,14 +60,16 @@ while (nrow(this_portfolio) == 1) {
 
   get_queue_stats(cfg$queue_file)
 
-  working_dir <- tempdir()
+  working_dir <- tempdir(check = TRUE)
   message(paste("Processing portfolio", this_portfolio$portfolio_name_ref_all))
   message(paste("From directory", this_portfolio$relpath))
   message(paste("In working directory", working_dir))
 
   user_id <- 4L
   user_dir <- file.path(working_dir, "user_results")
-  dir.create(file.path(user_dir, user_id), recursive = TRUE)
+  if (!dir.exists(user_dir)) {
+    dir.create(file.path(user_dir, user_id), recursive = TRUE)
+  }
   stopifnot(dir.exists(user_dir))
 
   # paths are tricky with base::file.copy, but needed because
@@ -76,14 +87,22 @@ while (nrow(this_portfolio) == 1) {
   exit_code <- system2(
     command = script_path,
     args = c(
+      "-v", "-i",
+      paste("-m", cfg$docker_image),
+      paste("-t", cfg$docker_tag),
       paste0("-p ", "\"", this_portfolio$portfolio_name_ref_all, "\""),
       paste("-w", working_dir),
+      # paste("-w", file.path(working_dir, this_portfolio$relpath)),
       paste("-y", user_dir),
+      paste("-u", user_id),
       "-r /bound/bin/run-r-scripts-results-only"
     )
   )
 
+  message(paste("Exit Code:", exit_code))
+
   if (exit_code == 0L) {
+  message(paste("normal_exit", exit_code))
     # Note not deleting original copy, but overwriting (only if sucessful)
     # see note above regarding base::file.copy
     base::file.copy(
@@ -96,12 +115,17 @@ while (nrow(this_portfolio) == 1) {
     )
 
     exit_status <- "done"
+
+    if (!dir.exists(working_dir)) {
+      unlink(working_dir, recursive = TRUE)
+    }
   } else {
+  message(paste("aberrent_exit", exit_code))
     exit_status <- paste("Failed (", exit_code, ")")
   }
 
   write_queue(
-    prepare_queue_message(x = this_portfolio, status = "done"),
+    prepare_queue_message(x = this_portfolio, status = exit_status),
     cfg$queue_file
   )
   #actually get the next item

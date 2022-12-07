@@ -1,5 +1,7 @@
 #! /bin/bash
 
+set -e
+
 usage() {
   echo "Usage: $0  -p <portfolio name string>" 1>&2
   echo "Optional flags:" 1>&2

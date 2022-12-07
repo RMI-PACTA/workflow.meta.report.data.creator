@@ -63,7 +63,8 @@ get_queue_stats <- function(queue_file, write_message = TRUE) {
       )
   ) %>%
   summarize(
-    time_to_run = difftime(max(queue_time), min(queue_time))
+    time_to_run = difftime(max(queue_time), min(queue_time)),
+    .groups = "drop"
   )
 
   average_runtime <- all_runtimes %>% pull(time_to_run) %>% mean(na.rm = TRUE)

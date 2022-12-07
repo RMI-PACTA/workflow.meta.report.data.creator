@@ -73,29 +73,15 @@ while (nrow(this_portfolio) == 1) {
     copy.date = FALSE
   )
 
-  # exit_code <- system2(
-  #   command = script_path,
-  #   args = c(
-  #     paste0("-p ", "\"", this_row$portfolio_name_ref_all, "\""),
-  # paste("-w", working_dir),
-  # paste("-y", user_dir),
-  # "-r /bound/bin/run-r-scripts-results-only"
-  #   )
-  # )
-
-  message("Running PACTish")
-  Sys.sleep(runif(1) * 100)
-  file.create(c(
-      file.path(
-        working_dir,
-        this_portfolio$relpath, "40_Results", paste0(this_portfolio$portfolio_name_ref_all, LETTERS[1:5], ".txt")
-        ),
-      file.path(
-        working_dir,
-        this_portfolio$relpath, "50_Outputs", paste0(this_portfolio$portfolio_name_ref_all, LETTERS[1:5], ".txt")
-      )
-      ))
-  exit_code <- if_else(runif(1) < 0.1, 0L, 127L)
+  exit_code <- system2(
+    command = script_path,
+    args = c(
+      paste0("-p ", "\"", this_portfolio$portfolio_name_ref_all, "\""),
+      paste("-w", working_dir),
+      paste("-y", user_dir),
+      "-r /bound/bin/run-r-scripts-results-only"
+    )
+  )
 
   if (exit_code == 0L) {
     # Note not deleting original copy, but overwriting (only if sucessful)

@@ -99,15 +99,13 @@ while (nrow(this_portfolio) == 1) {
     )
   )
 
-  message(paste("Exit Code:", exit_code))
-
   if (exit_code == 0L) {
-  message(paste("normal_exit", exit_code))
+
     # Note not deleting original copy, but overwriting (only if sucessful)
     # see note above regarding base::file.copy
     base::file.copy(
-      from = file.path(working_dir, this_portfolio$relpath),
-      to = file.path(cfg$output_dir),
+      from = file.path(working_dir, basename(this_portfolio$relpath)),
+      to = file.path(cfg$output_dir, dirname(this_portfolio$relpath)),
       recursive = TRUE,
       overwrite = TRUE,
       copy.mode = FALSE,
@@ -120,7 +118,6 @@ while (nrow(this_portfolio) == 1) {
       unlink(working_dir, recursive = TRUE)
     }
   } else {
-  message(paste("aberrent_exit", exit_code))
     exit_status <- paste("Failed (", exit_code, ")")
   }
 

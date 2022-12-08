@@ -35,7 +35,7 @@ write_queue <- function(contents, queue_file) {
 }
 
 get_queue_status <- function(queue_file) {
-  read.csv(queue_file) %>%
+  read.csv(queue_file, stringsAsFactors = FALSE) %>%
     group_by(relpath, portfolio_name_ref_all) %>%
     dplyr::filter(timestamp == max(timestamp)) %>%
     ungroup()
@@ -50,7 +50,7 @@ get_next_queue_item <- function(queue_file, waiting_status = c("waiting")) {
 
 get_queue_stats <- function(queue_file, write_message = TRUE) {
 
-  queue <- read.csv(queue_file)
+  queue <- read.csv(queue_file, stringsAsFactors = FALSE)
 
   all_runtimes <- queue %>%
     group_by(relpath, portfolio_name_ref_all, worker, pid) %>%

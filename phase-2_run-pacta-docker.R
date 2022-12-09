@@ -63,6 +63,7 @@ this_portfolio <- get_next_queue_item(cfg$queue_file)
   message(paste("Processing portfolio", this_portfolio$portfolio_name_ref_all))
   message(paste("From directory", this_portfolio$relpath))
   message(paste("In working directory", working_dir))
+  file.path(cfg$output_dir, this_portfolio$relpath, "00_Log_Files")
 
   user_id <- 4L
   user_dir <- file.path(working_dir, "user_results")
@@ -70,6 +71,7 @@ this_portfolio <- get_next_queue_item(cfg$queue_file)
     dir.create(file.path(user_dir, user_id), recursive = TRUE)
   }
   stopifnot(dir.exists(user_dir))
+  system2("chmod -R 777", working_dir)
 
   # paths are tricky with base::file.copy, but needed because
   # fs::dir_copy doesn't allow for ignoring permissions or timestamps

@@ -51,7 +51,6 @@ if (!file.exists(cfg$queue_file)) {
 }
 
 this_portfolio <- get_next_queue_item(cfg$queue_file)
-while (nrow(this_portfolio) == 1) {
 
   write_queue(
     prepare_queue_message(x = this_portfolio, status = "running"),
@@ -127,4 +126,3 @@ while (nrow(this_portfolio) == 1) {
   )
   #actually get the next item
   this_portfolio <- get_next_queue_item(cfg$queue_file)
-}

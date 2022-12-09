@@ -86,7 +86,6 @@ this_portfolio <- get_next_queue_item(cfg$queue_file)
   exit_code <- system2(
     command = script_path,
     args = c(
-      "-v", "-i",
       paste("-m", cfg$docker_image),
       paste("-t", cfg$docker_tag),
       paste0("-p ", "\"", this_portfolio$portfolio_name_ref_all, "\""),

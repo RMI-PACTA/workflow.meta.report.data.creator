@@ -78,12 +78,27 @@ get_portfolio_refname <- function(path) {
   return(list(refnames))
 }
 
-has_pacta_results <- function(path, portfolio_name_ref_all) {
+has_pacta_results <- function(path, portfolio_name_ref_all, detect_results = TRUE, dectect_outputs = TRUE) {
   files <- list.files(path, recursive = TRUE, full.names = FALSE)
-  has_results_files <- any(
+  if (detect_results) {
+    has_results_files <- any(
       grepl(
         x = files,
         pattern = file.path("40_Results", portfolio_name_ref_all)
       )
     )
+  } else {
+    has_results_files <- NULL
+  }
+  if (detect_outputs) {
+    has_outputs_files <- any(
+      grepl(
+        x = files,
+        pattern = file.path("50_Outputs", portfolio_name_ref_all)
+      )
+    )
+  } else {
+    has_outputs_files <- NULL
+  }
+  return(any(c(has_results_files, has_outputs_files)))
 }

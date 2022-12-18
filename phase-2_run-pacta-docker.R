@@ -16,6 +16,17 @@ if (is.null(cfg$docker_tag)) {
   cfg$docker_tag <- "latest"
 }
 
+if (is.null(cfg$run_results)) {
+  cfg$run_results <- TRUE
+}
+
+
+
+if (is.null(cfg$run_reports)) {
+  cfg$run_reports <- TRUE
+}
+
+
 
 if (!file.exists(cfg$queue_file)) {
 
@@ -97,7 +108,15 @@ while (nrow(this_portfolio) == 1) {
     )
   )
 
-  script_to_run <- "/bound/bin/run-r-scripts-results-only"
+  script_to_run <- paste0(
+    "/bound/bin/",
+    dplyr::case_when(
+      cfg$run_results && cfg$run_reports ~ "run-r-scripts",
+      cfg$run_results && !cfg$run_reports ~ "run-r-scripts-results-only",
+      !cfg$run_results && cfg$run_reports ~ "run-r-scripts-outputs-only",
+    )
+  )
+
 
   exit_code <- system2(
     command = "docker",

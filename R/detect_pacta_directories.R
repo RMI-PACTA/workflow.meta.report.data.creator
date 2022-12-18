@@ -1,7 +1,29 @@
-detect_pacta_dirs <- function(path) {
+essential_pacta_dirs <- c(
+    "10_Parameter_File",
+    "20_Raw_Inputs",
+    "30_Processed_Inputs",
+    "40_Results",
+    "50_Outputs"
+  )
+
+pacta_dirs <- c("00_Log_Files", essential_pacta_dirs)
+
+detect_pacta_dirs <- function(
+  path,
+  remove_pacta_dirs = TRUE
+  ) {
   all_dirs <- tibble(
     relpath = list.dirs(path, recursive = TRUE, full.names = FALSE)
-  ) %>%
+  )
+
+  if (remove_pacta_dirs) {
+    filtered_dirs <- all_dirs %>%
+      dplyr::filter(!(basename(relpath) %in% pacta_dirs))
+  } else {
+    filtered_dirs <- all_dirs
+  }
+
+  all_dirs <- filtered_dirs %>%
   rowwise() %>%
   mutate(
     is_pacta_dir = check_working_dir_structure(file.path(path, relpath))
@@ -11,13 +33,7 @@ detect_pacta_dirs <- function(path) {
 
 check_working_dir_structure <- function(path) {
   dir_structure <- list.dirs(path, recursive = TRUE, full.names = FALSE)
-  expected_files <- c(
-    "10_Parameter_File",
-    "20_Raw_Inputs",
-    "30_Processed_Inputs",
-    "40_Results",
-    "50_Outputs"
-  )
+  expected_files <- pacta_dirs
   missing_dirs <- setdiff(expected_files, dir_structure)
   if (length(missing_dirs > 0)) {
     return(FALSE)

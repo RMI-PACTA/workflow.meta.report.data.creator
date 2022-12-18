@@ -25,7 +25,9 @@ stopifnot(file.exists(script_path))
 
 
 if (!file.exists(cfg$queue_file)) {
+
   message(paste("Creating queue file:", cfg$queue_file))
+
   all_paths <- detect_pacta_dirs(cfg$output_dir) %>%
     dplyr::filter(is_pacta_dir) %>%
     mutate(
@@ -48,6 +50,7 @@ if (!file.exists(cfg$queue_file)) {
     status = all_paths$status
     ) %>% write_queue(queue_file = cfg$queue_file)
   message(paste("Queue File written", cfg$queue_file))
+
 }
 
 this_portfolio <- get_next_queue_item(cfg$queue_file)
@@ -84,18 +87,33 @@ while (nrow(this_portfolio) == 1) {
     copy.date = FALSE
   )
 
+  docker_args <- c(
+    "--rm",
+    "--network none",
+    "--user 1000:1000",
+    "--memory-swappiness=0",
+    paste0(
+      "--mount type=bind,source=",
+      file.path(working_dir, basename(this_portfolio$relpath)),
+      ",", "target=/bound/working_dir"
+    ),
+    paste0(
+      "--mount type=bind,source=",
+      file.path(user_dir),
+      ",", "target=/user_results"
+    )
+  )
+
+  script_to_run <- "/bound/bin/run-r-scripts-results-only"
+
   exit_code <- system2(
-    command = script_path,
+    command = "docker",
     args = c(
-      "-v", "-i",
-      paste("-m", cfg$docker_image),
-      paste("-t", cfg$docker_tag),
-      paste0("-p ", "\"", this_portfolio$portfolio_name_ref_all, "\""),
-      paste("-w", working_dir),
-      # paste("-w", file.path(working_dir, this_portfolio$relpath)),
-      paste("-y", user_dir),
-      paste("-u", user_id),
-      "-r /bound/bin/run-r-scripts-results-only"
+      "run",
+      docker_args,
+      paste0(cfg$docker_image, ":", cfg$docker_tag),
+      script_to_run,
+      this_portfolio$portfolio_name_ref_all
     )
   )
 

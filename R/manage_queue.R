@@ -81,7 +81,13 @@ get_queue_stats <- function(queue_file, write_message = TRUE) {
     pull(n) %>%
     sum(na.rm = TRUE)
 
-  expected_time_to_finish <- outstanding_portfolios * average_runtime
+  running_portfolios <- current_status %>%
+    dplyr::filter(status %in% c("running")) %>%
+    pull(n) %>%
+    sum(na.rm = TRUE)
+
+  # consider the current number of runners
+  expected_time_to_finish <- outstanding_portfolios * average_runtime / nrow(running_portfolios)
 
   if (write_message) {
     message("Queue Status:")

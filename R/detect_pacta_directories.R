@@ -78,7 +78,12 @@ get_portfolio_refname <- function(path) {
   return(list(refnames))
 }
 
-has_pacta_results <- function(path, portfolio_name_ref_all, detect_results = TRUE, dectect_outputs = TRUE) {
+has_pacta_results <- function(
+  path,
+  portfolio_name_ref_all,
+  detect_results = TRUE,
+  detect_outputs = TRUE
+  ) {
   files <- list.files(path, recursive = TRUE, full.names = FALSE)
   if (detect_results) {
     has_results_files <- any(

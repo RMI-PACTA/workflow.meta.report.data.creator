@@ -17,13 +17,6 @@ if (is.null(cfg$docker_tag)) {
 }
 
 
-script_path <- here(
-  "transitionmonitor_docker",
-  "run-like-constructiva-flags.sh"
-)
-stopifnot(file.exists(script_path))
-
-
 if (!file.exists(cfg$queue_file)) {
 
   message(paste("Creating queue file:", cfg$queue_file))

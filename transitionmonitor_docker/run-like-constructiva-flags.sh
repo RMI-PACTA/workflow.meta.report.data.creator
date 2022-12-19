@@ -136,6 +136,6 @@ fi
 
 echo Running Docker Container
 
-docker run "${args[@]}"
+sudo docker run "${args[@]}"
 
 exit 0

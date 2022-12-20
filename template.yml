@@ -3,7 +3,6 @@ default:
   output_dir: "<absolute_path>"
   data_path: "<absolute_path_to_raw_portfolios>"
   queue_file: "<absolute_path>"
-  force_new_queue: false
   run_results: true
   force_results: false
   run_reports: true

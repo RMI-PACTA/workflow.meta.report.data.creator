@@ -25,8 +25,7 @@ if (is.null(cfg$run_reports)) {
 }
 
 
-# using any() to coalesce a potential NULL to FALSE, also collapse vector
-if (any(cfg$force_new_queue) || !file.exists(cfg$queue_file)) {
+if (!file.exists(cfg$queue_file)) {
 
   message(paste("Creating queue file:", cfg$queue_file))
 
@@ -44,6 +43,8 @@ if (any(cfg$force_new_queue) || !file.exists(cfg$queue_file)) {
         path = file.path(cfg$output_dir, relpath),
         portfolio_name_ref_all = portfolio_name_ref_all,
         detect_results = (
+          # using any() to coalesce a potential NULL to FALSE, also
+          # collapse vector
           !any(cfg$force_results) && cfg$run_results
           ),
         detect_outputs = (

@@ -6,7 +6,7 @@ essential_pacta_dirs <- c(
     "50_Outputs"
   )
 
-pacta_dirs <- c("00_Log_Files", pacta_dirs)
+pacta_dirs <- c("00_Log_Files", essential_pacta_dirs)
 
 detect_pacta_dirs <- function(
   path,

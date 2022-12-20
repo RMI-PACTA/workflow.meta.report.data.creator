@@ -20,8 +20,6 @@ if (is.null(cfg$run_results)) {
   cfg$run_results <- TRUE
 }
 
-
-
 if (is.null(cfg$run_reports)) {
   cfg$run_reports <- TRUE
 }
@@ -38,13 +36,20 @@ if (!file.exists(cfg$queue_file)) {
       portfolio_name_ref_all = get_portfolio_refname(
         file.path(cfg$output_dir, relpath)
       )
-    ) %>%
+      ) %>%
     unnest(portfolio_name_ref_all) %>%
     rowwise() %>%
     mutate(
       has_pacta_results = has_pacta_results(
-        file.path(cfg$output_dir, relpath),
-        portfolio_name_ref_all)
+        path = file.path(cfg$output_dir, relpath),
+        portfolio_name_ref_all = portfolio_name_ref_all,
+        detect_results = (
+          !coalesce(cfg$force_results, FALSE) && cfg$run_results
+          ),
+        detect_outputs = (
+          !coalesce(cfg$force_reports, FALSE) && cfg$run_reports
+          )
+        )
       ) %>%
     mutate(status = if_else(has_pacta_results, "done", "waiting"))
 

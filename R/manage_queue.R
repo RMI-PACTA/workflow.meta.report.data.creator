@@ -18,7 +18,7 @@ prepare_queue_message <- function(
     status = status,
     worker = worker,
     pid = pid,
-    timestamp = format(Sys.time(), tz = "UTC")
+    timestamp = format(Sys.time(), format = "%Y-%m-%d %H:%M:%OS6", tz = "UTC")
   )
 }
 
@@ -67,7 +67,10 @@ get_queue_stats <- function(queue_file, write_message = TRUE) {
     .groups = "drop"
   )
 
-  average_runtime <- all_runtimes %>% pull(time_to_run) %>% mean(na.rm = TRUE)
+  average_runtime <- all_runtimes %>%
+    dplyr::filter(time_to_run > 0) %>%
+    pull(time_to_run) %>%
+    mean(na.rm = TRUE)
 
   current_status <- queue %>%
     group_by(relpath, portfolio_name_ref_all) %>%
@@ -77,17 +80,23 @@ get_queue_stats <- function(queue_file, write_message = TRUE) {
     ungroup()
 
   outstanding_portfolios <- current_status %>%
-    dplyr::filter(status %in% c("done", "waiting")) %>%
+    dplyr::filter(status %in% c("waiting")) %>%
     pull(n) %>%
     sum(na.rm = TRUE)
 
-  running_portfolios <- current_status %>%
+  runners <- queue %>%
+    group_by(worker, pid) %>%
+    dplyr::filter(timestamp == max(timestamp)) %>%
     dplyr::filter(status %in% c("running")) %>%
+    count() %>%
     pull(n) %>%
     sum(na.rm = TRUE)
+
 
   # consider the current number of runners
-  expected_time_to_finish <- outstanding_portfolios * average_runtime / nrow(running_portfolios)
+  expected_time_to_finish <- outstanding_portfolios * (
+    average_runtime / min(runners, outstanding_portfolios)
+    )
 
   if (write_message) {
     message("Queue Status:")

@@ -50,7 +50,8 @@ get_next_queue_item <- function(queue_file, waiting_status = c("waiting")) {
 
 get_queue_stats <- function(queue_file, write_message = TRUE) {
 
-  queue <- read.csv(queue_file, stringsAsFactors = FALSE)
+  queue <- read.csv(queue_file, stringsAsFactors = FALSE) %>%
+    mutate(timestamp = as.POSIXct(timestamp))
 
   all_runtimes <- queue %>%
     group_by(relpath, portfolio_name_ref_all, worker, pid) %>%
@@ -63,7 +64,10 @@ get_queue_stats <- function(queue_file, write_message = TRUE) {
       )
   ) %>%
   summarize(
-    time_to_run = difftime(max(queue_time), min(queue_time)),
+    time_to_run = difftime(
+      max(queue_time, na.rm = TRUE),
+      min(queue_time, na.rm = TRUE)
+      ),
     .groups = "drop"
   )
 
@@ -91,7 +95,6 @@ get_queue_stats <- function(queue_file, write_message = TRUE) {
     count() %>%
     pull(n) %>%
     sum(na.rm = TRUE)
-
 
   # consider the current number of runners
   expected_time_to_finish <- outstanding_portfolios * (

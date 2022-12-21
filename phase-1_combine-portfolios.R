@@ -159,7 +159,9 @@ saveRDS(data, file.path(output_dir, paste0(project_prefix, "_full.rds")))
 meta_output_dir <- file.path(output_dir, "meta")
 dir.create(meta_output_dir, showWarnings = FALSE)
 
-dir_create(file.path(meta_output_dir, pacta_directories))
+for (dir in file.path(meta_output_dir, pacta_directories)) {
+  dir.create(dir)
+}
 
 data %>%
   mutate(portfolio_name = "Meta Portfolio") %>%
@@ -167,7 +169,7 @@ data %>%
   select(investor_name, portfolio_name, isin, market_value, currency) %>%
   group_by_all() %>% ungroup(market_value) %>%
   summarise(market_value = sum(market_value, na.rm = TRUE), .groups = "drop") %>%
-  write_csv(file = file.path(meta_output_dir, "20_Raw_Inputs", paste0(project_prefix, "_meta.csv")))
+  write.csv(file = file.path(meta_output_dir, "20_Raw_Inputs", paste0(project_prefix, "_meta.csv")))
 
 config_list <-
   list(
@@ -221,7 +223,9 @@ for (user_id in all_user_ids) {
     )
 
   user_id_output_dir <- file.path(users_output_dir, paste0(project_prefix, "_user_", user_id))
-  dir_create(file.path(user_id_output_dir, pacta_directories))
+  for (dir in file.path(user_id_output_dir, pacta_directories)) {
+    dir.create(dir, recursive = TRUE)
+  }
 
   write_yaml(config_list, file = file.path(user_id_output_dir, "10_Parameter_File", paste0(project_prefix, "_user_", user_id, "_PortfolioParameters.yml")))
 
@@ -229,7 +233,7 @@ for (user_id in all_user_ids) {
     select(investor_name, portfolio_name, isin, market_value, currency) %>%
     group_by_all() %>% ungroup(market_value) %>%
     summarise(market_value = sum(market_value, na.rm = TRUE), .groups = "drop") %>%
-    write_csv(file.path(user_id_output_dir, "20_Raw_Inputs", paste0(project_prefix, "_user_", user_id, ".csv")))
+    write.csv(file.path(user_id_output_dir, "20_Raw_Inputs", paste0(project_prefix, "_user_", user_id, ".csv")))
 }
 
 
@@ -262,7 +266,9 @@ for (org_type in all_org_types) {
     )
 
   org_type_output_dir <- file.path(orgs_output_dir, paste0(project_prefix, "_org_", org_type))
-  dir_create(file.path(org_type_output_dir, pacta_directories))
+  for (dir in file.path(org_type_output_dir, pacta_directories)) {
+    dir.create(dir, recursive = TRUE)
+  }
 
   write_yaml(config_list, file = file.path(org_type_output_dir, "10_Parameter_File", paste0(project_prefix, "_org_", org_type, "_PortfolioParameters.yml")))
 
@@ -270,7 +276,7 @@ for (org_type in all_org_types) {
     select(investor_name, portfolio_name, isin, market_value, currency) %>%
     group_by_all() %>% ungroup(market_value) %>%
     summarise(market_value = sum(market_value, na.rm = TRUE), .groups = "drop") %>%
-    write_csv(file.path(org_type_output_dir, "20_Raw_Inputs", paste0(project_prefix, "_org_", org_type, ".csv")))
+    write.csv(file.path(org_type_output_dir, "20_Raw_Inputs", paste0(project_prefix, "_org_", org_type, ".csv")))
 }
 
 # slices for per port_id -------------------------------------------------------
@@ -373,56 +379,3 @@ for (port_id in all_port_ids) {
     summarise(market_value = sum(market_value, na.rm = TRUE), .groups = "drop") %>%
     write_csv(file.path(port_id_output_dir, "20_Raw_Inputs", paste0(project_prefix, "_port_", port_id, ".csv")))
 }
-
-
-# slices for per port_id -------------------------------------------------------
-
-ports_output_dir <- file.path(output_dir, "port_id")
-dir.create(ports_output_dir, showWarnings = FALSE)
-
-all_port_ids <- unique(data$port_id)
-
-for (port_id in all_port_ids) {
-  port_data <-
-    data %>%
-    dplyr::filter(port_id == .env$port_id) %>%
-    mutate(portfolio_name = as.character(.env$port_id))
-
-  portfolio_name <- encodeString(as.character(unique(port_data$portfolio_name)))
-  if (length(portfolio_name) > 1) { portfolio_name <- port_id }
-
-  investor_name <- encodeString(as.character(unique(port_data$investor_name)))
-  if (length(investor_name) > 1) { investor_name <- investor_name[[1]] }
-
-  peer_group <- unique(port_data$organization_type)
-  if (length(peer_group) > 1) { peer_group <- peer_group[[1]] }
-
-  config_list <-
-    list(
-      default = list(
-        parameters = list(
-          portfolio_name = as.character(portfolio_name),
-          investor_name = as.character(investor_name),
-          peer_group = peer_group,
-          language = default_language,
-          project_code = project_code,
-          holdings_date = holdings_date
-        )
-      )
-    )
-
-  port_id_output_dir <- file.path(ports_output_dir, paste0(project_prefix, "_port_", port_id))
-  dir_create(file.path(port_id_output_dir, pacta_directories))
-
-  write_yaml(config_list, file = file.path(port_id_output_dir, "10_Parameter_File", paste0(project_prefix, "_port_", port_id, "_PortfolioParameters.yml")))
-
-  port_data %>%
-    select(investor_name, portfolio_name, isin, market_value, currency) %>%
-    mutate(investor_name = .env$investor_name) %>%
-    mutate(portfolio_name = .env$portfolio_name) %>%
-    group_by_all() %>% ungroup(market_value) %>%
-    summarise(market_value = sum(market_value, na.rm = TRUE), .groups = "drop") %>%
-    write_csv(file.path(port_id_output_dir, "20_Raw_Inputs", paste0(project_prefix, "_port_", port_id, ".csv")))
-}
-
-

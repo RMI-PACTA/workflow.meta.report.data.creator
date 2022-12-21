@@ -16,9 +16,16 @@ detect_pacta_dirs <- function(
     relpath = list.dirs(path, recursive = TRUE, full.names = FALSE)
   )
 
+  browser()
+
   if (remove_pacta_dirs) {
     filtered_dirs <- all_dirs %>%
-      dplyr::filter(!(basename(relpath) %in% pacta_dirs))
+      dplyr::filter(
+        !grepl(
+          pattern = paste(pacta_dirs, collapse = "|"),
+          x = relpath
+        )
+      )
   } else {
     filtered_dirs <- all_dirs
   }

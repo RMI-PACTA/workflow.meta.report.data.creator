@@ -1,6 +1,5 @@
 library("dplyr")
 library("tibble")
-library("tidyr")
 library("here")
 
 source(here("R", "manage_queue.R"))
@@ -39,18 +38,19 @@ if (!file.exists(cfg$queue_file)) {
     unnest(portfolio_name_ref_all) %>%
     rowwise() %>%
     mutate(
-      has_pacta_results = has_pacta_results(
-        path = file.path(cfg$output_dir, relpath),
-        portfolio_name_ref_all = portfolio_name_ref_all,
-        detect_results = (
-          # using any() to coalesce a potential NULL to FALSE, also
-          # collapse vector
-          !any(cfg$force_results) && cfg$run_results
-          ),
-        detect_outputs = (
-          !any(cfg$force_reports) && cfg$run_reports
-          )
-        )
+      # has_pacta_results = has_pacta_results(
+      # has_pacta_results = has_pacta_results(
+      #   path = file.path(cfg$output_dir, relpath),
+      #   portfolio_name_ref_all = portfolio_name_ref_all,
+      #   detect_results = (
+      #     # using any() to coalesce a potential NULL to FALSE, also
+      #     # collapse vector
+      #     !any(cfg$force_results) && cfg$run_results
+      #     ),
+      #   detect_outputs = (
+      #     !any(cfg$force_reports) && cfg$run_reports
+      #     )
+      #   )
       ) %>%
     mutate(status = if_else(has_pacta_results, "done", "waiting"))
 
@@ -117,7 +117,7 @@ while (nrow(this_portfolio) == 1) {
   script_to_run <- paste0(
     "/bound/bin/",
     dplyr::case_when(
-      cfg$run_results && cfg$run_reports ~ "run-r-scripts",
+      cfg$run_results && cfg$run_reports ~ "run-r-scripts-mfm",
       cfg$run_results && !cfg$run_reports ~ "run-r-scripts-results-only",
       !cfg$run_results && cfg$run_reports ~ "run-r-scripts-outputs-only",
     )

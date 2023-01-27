@@ -1,4 +1,13 @@
 require("dplyr")
+require("filelock")
+
+queue_lock_file <- function(queue_file){
+  path <- paste0(normalizePath(queue_file), ".lockfile")
+  if (!file.exists(path)) {
+    file.create(path)
+  }
+  return(path)
+}
 
 prepare_queue_message <- function(
   relpath,
@@ -23,6 +32,8 @@ prepare_queue_message <- function(
 }
 
 write_queue <- function(contents, queue_file) {
+  on.exit(filelock::unlock(lock))
+  lock <- filelock::lock(queue_lock_file(queue_file))
   is_new_file <- !file.exists(queue_file)
   write.table(
     x = contents,
@@ -35,6 +46,8 @@ write_queue <- function(contents, queue_file) {
 }
 
 get_queue_status <- function(queue_file) {
+  on.exit(filelock::unlock(lock))
+  lock <- filelock::lock(queue_lock_file(queue_file))
   read.csv(queue_file, stringsAsFactors = FALSE) %>%
     group_by(relpath, portfolio_name_ref_all) %>%
     dplyr::filter(timestamp == max(timestamp)) %>%
@@ -50,8 +63,10 @@ get_next_queue_item <- function(queue_file, waiting_status = c("waiting")) {
 
 get_queue_stats <- function(queue_file, write_message = TRUE) {
 
+  lock <- filelock::lock(queue_lock_file(queue_file))
   queue <- read.csv(queue_file, stringsAsFactors = FALSE) %>%
     mutate(timestamp = as.POSIXct(timestamp))
+  filelock::unlock(lock)
 
   all_runtimes <- queue %>%
     group_by(relpath, portfolio_name_ref_all, worker, pid) %>%

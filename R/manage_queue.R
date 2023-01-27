@@ -22,12 +22,14 @@ prepare_queue_message <- function(
     portfolio_name_ref_all <- x$portfolio_name_ref_all
   }
   tibble(
-    relpath = relpath,
-    portfolio_name_ref_all = portfolio_name_ref_all,
-    status = status,
-    worker = worker,
-    pid = pid,
-    timestamp = format(Sys.time(), format = "%Y-%m-%d %H:%M:%OS6", tz = "UTC")
+    relpath = as.character(relpath),
+    portfolio_name_ref_all = as.character(portfolio_name_ref_all),
+    status = as.character(status),
+    worker = as.character(worker),
+    pid = as.character(pid),
+    timestamp = as.character(
+      format(Sys.time(), format = "%Y-%m-%d %H:%M:%OS6", tz = "UTC")
+    )
   )
 }
 
@@ -64,9 +66,11 @@ get_next_queue_item <- function(queue_file, waiting_status = c("waiting")) {
 get_queue_stats <- function(queue_file, write_message = TRUE) {
 
   lock <- filelock::lock(queue_lock_file(queue_file))
-  queue <- read.csv(queue_file, stringsAsFactors = FALSE) %>%
-    mutate(timestamp = as.POSIXct(timestamp))
+  queue <- read.csv(queue_file, stringsAsFactors = FALSE)
   filelock::unlock(lock)
+
+  queue <- queue %>%
+    mutate(timestamp = as.POSIXct(timestamp))
 
   all_runtimes <- queue %>%
     group_by(relpath, portfolio_name_ref_all, worker, pid) %>%

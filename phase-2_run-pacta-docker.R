@@ -71,8 +71,6 @@ while (nrow(this_portfolio) == 1) {
     cfg$queue_file
   )
 
-  get_queue_stats(cfg$queue_file)
-
   working_dir <- tempdir()
   message(paste("Processing portfolio", this_portfolio$portfolio_name_ref_all))
   message(paste("From directory", this_portfolio$relpath))

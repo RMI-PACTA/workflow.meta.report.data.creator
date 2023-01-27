@@ -73,7 +73,7 @@ while (nrow(this_portfolio) == 1) {
 
   get_queue_stats(cfg$queue_file)
 
-  working_dir <- tempdir(check = TRUE)
+  working_dir <- tempdir()
   message(paste("Processing portfolio", this_portfolio$portfolio_name_ref_all))
   message(paste("From directory", this_portfolio$relpath))
   message(paste("In working directory", working_dir))

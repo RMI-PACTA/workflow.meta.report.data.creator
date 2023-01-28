@@ -1,11 +1,14 @@
 library("dplyr")
 library("tibble")
 library("here")
+library("txtq")
 
 source(here("R", "manage_queue.R"))
 source(here("R", "detect_pacta_directories.R"))
 
-cfg <- config::get(file = commandArgs(trailingOnly = TRUE))
+config_file <- commandArgs(trailingOnly = TRUE)
+cfg <- config::get(file = config_file)
+queue <- txtq(file.path(normalizePath(dirname(config_file)), "queue"))
 
 if (is.null(cfg$docker_image)) {
   cfg$docker_image <- "transitionmonitordockerregistry.azurecr.io/rmi_pacta"
@@ -24,51 +27,61 @@ if (is.null(cfg$run_reports)) {
 }
 
 
-if (!file.exists(cfg$queue_file)) {
+if (queue$count() == 0L) {
 
-  message(paste("Creating queue file:", cfg$queue_file))
+  # message(paste("Creating queue file:", cfg$queue_file))
 
-  all_paths <- detect_pacta_dirs(cfg$output_dir) %>%
-    dplyr::filter(is_pacta_dir) %>%
-    mutate(
-      portfolio_name_ref_all = get_portfolio_refname(
-        file.path(cfg$output_dir, relpath)
-      )
-      ) %>%
-    unnest(portfolio_name_ref_all) %>%
-    rowwise() %>%
-    mutate(
-      # has_pacta_results = has_pacta_results(
-      # has_pacta_results = has_pacta_results(
-      #   path = file.path(cfg$output_dir, relpath),
-      #   portfolio_name_ref_all = portfolio_name_ref_all,
-      #   detect_results = (
-      #     # using any() to coalesce a potential NULL to FALSE, also
-      #     # collapse vector
-      #     !any(cfg$force_results) && cfg$run_results
-      #     ),
-      #   detect_outputs = (
-      #     !any(cfg$force_reports) && cfg$run_reports
-      #     )
-      #   )
-      ) %>%
-    mutate(status = if_else(has_pacta_results, "done", "waiting"))
+  # TODO: queue creation code
+  # all_paths <- detect_pacta_dirs(cfg$output_dir) %>%
+  #   dplyr::filter(is_pacta_dir) %>%
+  #   mutate(
+  #     portfolio_name_ref_all = get_portfolio_refname(
+  #       file.path(cfg$output_dir, relpath)
+  #     )
+  #     ) %>%
+  #   unnest(portfolio_name_ref_all) %>%
+  #   rowwise() %>%
+  #   mutate(
+  #     # has_pacta_results = has_pacta_results(
+  #     #   path = file.path(cfg$output_dir, relpath),
+  #     #   portfolio_name_ref_all = portfolio_name_ref_all,
+  #     #   detect_results = (
+  #     #     # using any() to coalesce a potential NULL to FALSE, also
+  #     #     # collapse vector
+  #     #     !any(cfg$force_results) && cfg$run_results
+  #     #     ),
+  #     #   detect_outputs = (
+  #     #     !any(cfg$force_reports) && cfg$run_reports
+  #     #     )
+  #     #   )
+  #     ) %>%
+  #   mutate(status = if_else(has_pacta_results, "done", "waiting"))
 
-  prepare_queue_message(
-    relpath = all_paths$relpath,
-    portfolio_name_ref_all = all_paths$portfolio_name_ref_all,
-    status = all_paths$status
-    ) %>% write_queue(queue_file = cfg$queue_file)
-  message(paste("Queue File written", cfg$queue_file))
+  # prepare_queue_message(
+  #   relpath = all_paths$relpath,
+  #   portfolio_name_ref_all = all_paths$portfolio_name_ref_all,
+  #   status = all_paths$status
+  #   ) %>% write_queue(queue_file = cfg$queue_file)
+  # message(paste("Queue File written", cfg$queue_file))
 
 }
 
-this_portfolio <- get_next_queue_item(cfg$queue_file)
+#register_runner
+write_supplemental(
+  prepare_queue_message(NA, NA, "register"),
+  queue
+)
+
+this_portfolio <- parse_queue_message(queue$pop()$message)
 while (nrow(this_portfolio) == 1) {
 
-  write_queue(
-    prepare_queue_message(x = this_portfolio, status = "running"),
-    cfg$queue_file
+  write_supplemental(
+    contents = prepare_queue_message(
+      relpath = this_portfolio$relpath,
+      portfolio_name_ref_all = this_portfolio$portfolio_name_ref_all,
+      status = "running"
+      ),
+    queue = queue
   )
 
   working_dir <- tempdir()
@@ -155,10 +168,22 @@ while (nrow(this_portfolio) == 1) {
     exit_status <- paste("Failed (", exit_code, ")")
   }
 
-  write_queue(
-    prepare_queue_message(x = this_portfolio, status = exit_status),
-    cfg$queue_file
+  write_supplemental(
+    contents = prepare_queue_message(
+      relpath = this_portfolio$relpath,
+      portfolio_name_ref_all = this_portfolio$portfolio_name_ref_all,
+      status = exit_status
+      ),
+    queue = queue
   )
+
   #actually get the next item
-  this_portfolio <- get_next_queue_item(cfg$queue_file)
+  this_portfolio <- parse_queue_message(queue$pop()$message)
 }
+
+#deregister_runner
+write_supplemental(
+  prepare_queue_message(NA, NA, "deregister"),
+  queue
+)
+

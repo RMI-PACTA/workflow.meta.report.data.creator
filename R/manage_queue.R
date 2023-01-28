@@ -1,8 +1,13 @@
-require("dplyr")
-require("filelock")
+queue_lock_file <- function(queue){
+  path <- file.path(normalizePath(queue$path()), "lock")
+  if (!file.exists(path)) {
+    file.create(path)
+  }
+  return(path)
+}
 
-queue_lock_file <- function(queue_file){
-  path <- paste0(normalizePath(queue_file), ".lockfile")
+supplemental_file <- function(queue){
+  path <- file.path(normalizePath(queue$path()), "supplemental")
   if (!file.exists(path)) {
     file.create(path)
   }
@@ -14,132 +19,104 @@ prepare_queue_message <- function(
   portfolio_name_ref_all,
   status,
   worker = Sys.info()[["nodename"]],
-  pid = Sys.getpid(),
-  x = NULL
+  pid = Sys.getpid()
   ) {
-  if (is.data.frame(x)) {
-    relpath <- x$relpath
-    portfolio_name_ref_all <- x$portfolio_name_ref_all
-  }
-  tibble(
+  paste(
     relpath = as.character(relpath),
     portfolio_name_ref_all = as.character(portfolio_name_ref_all),
     status = as.character(status),
     worker = as.character(worker),
     pid = as.character(pid),
     timestamp = as.character(
-      format(Sys.time(), format = "%Y-%m-%d %H:%M:%OS6", tz = "UTC")
-    )
+      timestamp
+        ),
+    sep = ","
   )
 }
 
-write_queue <- function(contents, queue_file) {
+write_supplemental <- function(contents, queue) {
+  supplemental_file <- supplemental_file(queue)
   on.exit(filelock::unlock(lock))
-  lock <- filelock::lock(queue_lock_file(queue_file))
-  is_new_file <- !file.exists(queue_file)
-  write.table(
+  lock <- filelock::lock(queue_lock_file(queue))
+  write(
     x = contents,
-    file = queue_file,
-    sep = ",",
-    append = TRUE,
-    col.names = is_new_file,
-    row.names = FALSE
+    file = supplemental_file,
+    append = TRUE
   )
 }
 
-get_queue_status <- function(queue_file) {
-  on.exit(filelock::unlock(lock))
-  lock <- filelock::lock(queue_lock_file(queue_file))
-  read.csv(queue_file, stringsAsFactors = FALSE) %>%
-    group_by(relpath, portfolio_name_ref_all) %>%
-    dplyr::filter(timestamp == max(timestamp)) %>%
-    ungroup()
+parse_queue_message <- function(message){
+  x <- strsplit(message, split = ",", fixed = TRUE)
+  m <- lapply(X =x, FUN = matrix, byrow = TRUE, ncol = 6)
+  out <- as.data.frame(do.call(rbind, m))
+  colnames(out) <- c(
+    "relpath",
+    "portfolio_name_ref_all",
+    "status",
+    "worker",
+    "pid",
+    "timestamp"
+  )
+  return(out)
 }
 
-get_next_queue_item <- function(queue_file, waiting_status = c("waiting")) {
-  next_item <- get_queue_status(queue_file) %>%
-    dplyr::filter(status %in% waiting_status) %>%
-    dplyr::slice(1)
-}
-
-
-get_queue_stats <- function(queue_file, write_message = TRUE) {
-
-  lock <- filelock::lock(queue_lock_file(queue_file))
-  queue <- read.csv(queue_file, stringsAsFactors = FALSE)
+read_supplemental <- function(queue, skip = 0, n = Inf){
+  nmax = ifelse(identical(n, Inf), -1, n)
+  lock <- filelock::lock(queue_lock_file(queue))
+  raw_contents <- scan(
+    file = supplemental_file(queue),
+    skip = skip,
+    what = character(),
+    nmax = nmax,
+    # using a sep that shouldn't appear in the contents
+    sep = "|",
+    na.strings = NULL,
+    quiet = TRUE
+  )
   filelock::unlock(lock)
+  out <- parse_queue_message(raw_contents)
+  return(out)
+}
 
-  queue <- queue %>%
-    mutate(timestamp = as.POSIXct(timestamp))
-
-  all_runtimes <- queue %>%
-    group_by(relpath, portfolio_name_ref_all, worker, pid) %>%
-    dplyr::filter(any(status == "done")) %>%
-    mutate(
-    queue_time = if_else(
-      status %in% c("running", "done"),
-      timestamp,
-      NULL
-      )
-  ) %>%
-  summarize(
-    time_to_run = difftime(
-      max(queue_time, na.rm = TRUE),
-      min(queue_time, na.rm = TRUE)
-      ),
-    .groups = "drop"
-  )
-
-  average_runtime <- all_runtimes %>%
-    dplyr::filter(time_to_run > 0) %>%
-    pull(time_to_run) %>%
-    mean(na.rm = TRUE)
-
-  current_status <- queue %>%
-    group_by(relpath, portfolio_name_ref_all) %>%
-    dplyr::filter(timestamp == max(timestamp)) %>%
-    group_by(status) %>%
-    count() %>%
-    ungroup()
-
-  outstanding_portfolios <- current_status %>%
-    dplyr::filter(status %in% c("waiting")) %>%
-    pull(n) %>%
-    sum(na.rm = TRUE)
-
-  runners <- queue %>%
-    group_by(worker, pid) %>%
-    dplyr::filter(timestamp == max(timestamp)) %>%
-    dplyr::filter(status %in% c("running")) %>%
-    count() %>%
-    pull(n) %>%
-    sum(na.rm = TRUE)
-
-  # consider the current number of runners
-  expected_time_to_finish <- outstanding_portfolios * (
-    average_runtime / min(runners, outstanding_portfolios)
-    )
-
-  if (write_message) {
-    message("Queue Status:")
-    for (i in seq_along(current_status$status)) {
-      message(paste(current_status$status[i], "-", current_status$n[i]))
-    }
-    message(paste("Average run time:", format(average_runtime)))
-    message(paste(
-        "Estimated time to finish:",
-        format(expected_time_to_finish),
-        "(",
-        format(Sys.time() + expected_time_to_finish, tz = "UTC"), "UTC",
-        ")"
-        ))
+find_runtime <- function(data){
+  relpath <- unique(data$relpath)
+  portfolio_name_ref_all <- unique(data$portfolio_name_ref_all)
+  start_index <- which(data$status == "running")
+  done_index <- which(data$status == "done")
+  if (!identical(done_index, integer())){
+    start_time <- min(data$timestamp[start_index], na.rm = TRUE)
+    done_time <- max(data$timestamp[done_index], na.rm = TRUE)
+    runtime <- as.numeric(done_time - start_time)
+  } else {
+    runtime <- NA_integer_
   }
+  out <- data.frame(
+    relpath = relpath,
+    portfolio_name_ref_all = portfolio_name_ref_all,
+    runtime = as.numeric(runtime)
+  )
+  return(out)
+}
 
-  return(invisible(list(
-        queue = queue,
-        all_runtimes = all_runtimes,
-        average_runtime = average_runtime,
-        current_status = current_status,
-        expected_time_to_finish = expected_time_to_finish
-        )))
+current_runners <- function(data){
+  registered <- data[data$status == "register", c("worker", "pid")]
+  deregistered <- data[data$status == "deregister", c("worker", "pid")]
+  out <- setdiff(registered, deregistered)
+  return(out)
+}
+
+get_queue_stats <- function(queue){
+  waiting <- queue$count()
+  supplemental <- read_supplemental(queue, skip = 0, n = Inf)
+  supplemental$timestamp <- as.POSIXct(supplemental$timestamp)
+  runtimes <- do.call(rbind, by(
+    data = supplemental,
+    INDICES = list(supplemental$relpath, supplemental$portfolio_name_ref_all),
+    FUN = find_runtime,
+    simplify = FALSE
+    ))
+  avg_runtime <- mean(runtimes$runtime, na.rm = TRUE)
+  runners <- current_runners(supplemental)
+  num_runners <- nrow(runners)
+  browser()
 }

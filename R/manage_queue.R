@@ -28,7 +28,7 @@ prepare_queue_message <- function(
     worker = as.character(worker),
     pid = as.character(pid),
     timestamp = as.character(
-      timestamp
+        format(Sys.time(), format = "%Y-%m-%d %H:%M:%OS6", tz = "UTC")
         ),
     sep = ","
   )

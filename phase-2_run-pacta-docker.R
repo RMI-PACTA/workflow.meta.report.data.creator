@@ -150,8 +150,9 @@ while (nrow(this_portfolio) == 1) {
     )
   )
 
-  if (exit_code == 0L) {
-
+  # This is outside of "if docker exits cleanly" so that we can inspect
+  # any records of failure (for example, if there are no PACTA relevant
+  # holdings)
     # Note not deleting original copy, but overwriting (only if sucessful)
     # see note above regarding base::file.copy
     base::file.copy(
@@ -162,6 +163,9 @@ while (nrow(this_portfolio) == 1) {
       copy.mode = FALSE,
       copy.date = FALSE
     )
+
+
+  if (exit_code == 0L) {
 
     exit_status <- "done"
 

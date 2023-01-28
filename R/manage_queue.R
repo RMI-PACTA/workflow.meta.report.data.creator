@@ -48,7 +48,7 @@ write_supplemental <- function(contents, queue) {
 parse_queue_message <- function(message){
   x <- strsplit(message, split = ",", fixed = TRUE)
   m <- lapply(X =x, FUN = matrix, byrow = TRUE, ncol = 6)
-  out <- as.data.frame(do.call(rbind, m))
+  out <- as.data.frame(do.call(rbind, m), stringsAsFactors = FALSE)
   colnames(out) <- c(
     "relpath",
     "portfolio_name_ref_all",

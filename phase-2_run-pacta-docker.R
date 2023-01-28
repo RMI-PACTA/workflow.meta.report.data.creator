@@ -10,6 +10,10 @@ config_file <- commandArgs(trailingOnly = TRUE)
 cfg <- config::get(file = config_file)
 queue <- txtq(file.path(normalizePath(dirname(config_file)), "queue"))
 
+if (is.null(cfg$output_dir)) {
+  cfg$output_dir <- normalizePath(dirname(config_file))
+}
+
 if (is.null(cfg$docker_image)) {
   cfg$docker_image <- "transitionmonitordockerregistry.azurecr.io/rmi_pacta"
 }

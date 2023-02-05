@@ -1,4 +1,3 @@
-library("dplyr")
 library("tibble")
 library("here")
 library("txtq")
@@ -36,38 +35,6 @@ if (queue$count() == 0L) {
   # message(paste("Creating queue file:", cfg$queue_file))
 
   # TODO: queue creation code
-  # all_paths <- detect_pacta_dirs(cfg$output_dir) %>%
-  #   dplyr::filter(is_pacta_dir) %>%
-  #   mutate(
-  #     portfolio_name_ref_all = get_portfolio_refname(
-  #       file.path(cfg$output_dir, relpath)
-  #     )
-  #     ) %>%
-  #   unnest(portfolio_name_ref_all) %>%
-  #   rowwise() %>%
-  #   mutate(
-  #     # has_pacta_results = has_pacta_results(
-  #     #   path = file.path(cfg$output_dir, relpath),
-  #     #   portfolio_name_ref_all = portfolio_name_ref_all,
-  #     #   detect_results = (
-  #     #     # using any() to coalesce a potential NULL to FALSE, also
-  #     #     # collapse vector
-  #     #     !any(cfg$force_results) && cfg$run_results
-  #     #     ),
-  #     #   detect_outputs = (
-  #     #     !any(cfg$force_reports) && cfg$run_reports
-  #     #     )
-  #     #   )
-  #     ) %>%
-  #   mutate(status = if_else(has_pacta_results, "done", "waiting"))
-
-  # prepare_queue_message(
-  #   relpath = all_paths$relpath,
-  #   portfolio_name_ref_all = all_paths$portfolio_name_ref_all,
-  #   status = all_paths$status
-  #   ) %>% write_queue(queue_file = cfg$queue_file)
-  # message(paste("Queue File written", cfg$queue_file))
-
 }
 
 #register_runner
@@ -129,15 +96,13 @@ while (nrow(this_portfolio) == 1) {
     )
   )
 
-  script_to_run <- paste0(
-    "/bound/bin/",
-    dplyr::case_when(
-      cfg$run_results && cfg$run_reports ~ "run-r-scripts-mfm",
-      cfg$run_results && !cfg$run_reports ~ "run-r-scripts-results-only",
-      !cfg$run_results && cfg$run_reports ~ "run-r-scripts-outputs-only",
-    )
-  )
-
+  if (cfg$run_results && cfg$run_reports){
+    script_to_run <- "/bound/bin/run-r-scripts"
+  } else if (cfg$run_results && !cfg$run_reports){
+    script_to_run <- "/bound/bin/run-r-scripts-results-only"
+  } else if (!cfg$run_results && cfg$run_reports){
+    script_to_run <- "/bound/bin/run-r-scripts-outputs_only"
+  }
 
   exit_code <- system2(
     command = "docker",

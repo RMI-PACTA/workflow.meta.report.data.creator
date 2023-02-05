@@ -79,23 +79,6 @@ while (nrow(this_portfolio) == 1) {
     copy.date = FALSE
   )
 
-  docker_args <- c(
-    "--rm",
-    "--network none",
-    "--user 1000:1000",
-    "--memory-swappiness=0",
-    paste0(
-      "--mount type=bind,source=",
-      file.path(working_dir, basename(this_portfolio$relpath)),
-      ",", "target=/bound/working_dir"
-    ),
-    paste0(
-      "--mount type=bind,source=",
-      file.path(user_dir),
-      ",", "target=/user_results"
-    )
-  )
-
   if (cfg$run_results && cfg$run_reports){
     script_to_run <- "/bound/bin/run-r-scripts"
   } else if (cfg$run_results && !cfg$run_reports){
@@ -104,15 +87,38 @@ while (nrow(this_portfolio) == 1) {
     script_to_run <- "/bound/bin/run-r-scripts-outputs_only"
   }
 
+  docker_run_args <- c(
+    "--rm",
+    "--network none",
+    "--user 1000:1000",
+    "--memory-swappiness=0"
+  )
+
+  docker_mount_paths <- c(
+    paste0(
+      "--mount type=bind,source=",
+      shQuote(file.path(working_dir, basename(this_portfolio$relpath))),
+      ",", "target='/bound/working_dir'"
+      ),
+    paste0(
+      "--mount type=bind,source=",
+      shQuote(file.path(user_dir)),
+      ",", "target='/user_results'"
+    )
+  )
+
+  docker_args <- c(
+    "run",
+    docker_run_args,
+    docker_mount_paths,
+    paste0(cfg$docker_image, ":", cfg$docker_tag),
+    script_to_run,
+    shQuote(this_portfolio$portfolio_name_ref_all)
+  )
+
   exit_code <- system2(
     command = "docker",
-    args = c(
-      "run",
-      docker_args,
-      paste0(cfg$docker_image, ":", cfg$docker_tag),
-      script_to_run,
-      this_portfolio$portfolio_name_ref_all
-    )
+    args = docker_args
   )
 
   # This is outside of "if docker exits cleanly" so that we can inspect

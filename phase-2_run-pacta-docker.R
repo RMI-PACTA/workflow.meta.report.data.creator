@@ -84,7 +84,7 @@ while (nrow(this_portfolio) == 1) {
   } else if (cfg$run_results && !cfg$run_reports){
     script_to_run <- "/bound/bin/run-r-scripts-results-only"
   } else if (!cfg$run_results && cfg$run_reports){
-    script_to_run <- "/bound/bin/run-r-scripts-outputs_only"
+    script_to_run <- "/bound/bin/run-r-scripts-outputs-only"
   }
 
   docker_run_args <- c(

@@ -54,13 +54,14 @@ mutate(
   filedir = dirname(path)
 ) %>%
 filter(filename %in% all_filenames$filename) %>%
-mutate(org = str_extract(string = as.character(filedir), pattern = "(?<=_org_)\\d+|meta")) %>% #lookahead group. https://stackoverflow.com/a/46788230
+mutate(org = str_extract(string = as.character(basename(filedir)), pattern = "(?<=_org_).+|meta")) %>% #lookahead group. https://stackoverflow.com/a/46788230
 left_join(distinct(select(users, type_id, type)), by = c("org" = "type_id")) %>%
 print()
 
 for (j in seq(1, nrow(all_filenames))){
   this_filetype <- all_filenames[j, ]
-  file_paths <- org_paths %>% filter(filename == this_filetype$filename)
+  file_paths <- org_paths %>% filter(filename == this_filetype$filename) %>%
+    mutate(type = if_else(org == "meta", "meta", type))
   all_results <- NULL
   for (i in seq(1, nrow(file_paths))){
     this_file <- file_paths[i, ]

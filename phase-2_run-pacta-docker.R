@@ -30,11 +30,58 @@ if (is.null(cfg$run_reports)) {
 }
 
 
-if (queue$count() == 0L) {
+# This code isn't stable enough yet (and dependent on particular file
+# structure) to be run non-interactively
+if (FALSE) {
 
-  # message(paste("Creating queue file:", cfg$queue_file))
+  library("dplyr")
+  library("fs")
+  library("stringr")
 
-  # TODO: queue creation code
+  top_dirs <- list.dirs(
+    path = dirname(normalizePath(config_file)),
+    recursive = FALSE,
+    full.names = TRUE
+  )
+  port_dirs <- list.dirs(
+    path = top_dirs,
+    recursive = FALSE,
+    full.names = TRUE
+  )
+
+  p <- port_dirs %>%
+    tibble(full_path = .) %>%
+    mutate(
+      bn = basename(full_path)
+      ) %>%
+    mutate(
+      relpath = path_rel(
+        path = full_path,
+        start = dirname(normalizePath(config_file))
+      )
+    ) %>%
+    mutate(
+      has_comma = str_detect(string = relpath, pattern = ","),
+      has_dot = str_detect(string = relpath, pattern = "\\."),
+      has_end_dot = str_detect(string = relpath, pattern = "\\.$")
+    )
+
+
+  portfolios_include <- p %>%
+    filter(!has_comma) %>%
+    filter(!has_dot)
+
+  portfolios_skip <- filter(p, !(full_path %in% portfolios_include$full_path))
+  if (nrow(portfolios_skip) > 0) {warning("Some portfolios have commas in their path. not including")}
+
+
+  prepare_queue_message(
+    relpath = portfolios_include$relpath,
+    portfolio_name_ref_all = portfolios_include$bn,
+    status = "waiting"
+    ) %>%
+  queue$push(message = ., title = "waiting")
+
 }
 
 #register_runner

@@ -67,6 +67,7 @@ while (nrow(this_portfolio) == 1) {
   }
   stopifnot(dir.exists(user_dir))
 
+  message("copying files to local")
   # paths are tricky with base::file.copy, but needed because
   # fs::dir_copy doesn't allow for ignoring permissions or timestamps
   # (needed on some remote file shares, such as Azure File Share)
@@ -78,6 +79,7 @@ while (nrow(this_portfolio) == 1) {
     copy.mode = FALSE,
     copy.date = FALSE
   )
+  message("done copying files to local")
 
   if (cfg$run_results && cfg$run_reports){
     script_to_run <- "/bound/bin/run-r-scripts"
@@ -123,6 +125,7 @@ while (nrow(this_portfolio) == 1) {
     stderr = file.path(working_dir, "stderr")
   )
 
+  message("copying files to remote")
   # This is outside of "if docker exits cleanly" so that we can inspect
   # any records of failure (for example, if there are no PACTA relevant
   # holdings)
@@ -136,6 +139,7 @@ while (nrow(this_portfolio) == 1) {
       copy.mode = FALSE,
       copy.date = FALSE
     )
+  message("done copying files to remote")
 
 
   if (exit_code == 0L) {

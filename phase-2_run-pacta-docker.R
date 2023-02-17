@@ -61,7 +61,7 @@ while (nrow(this_portfolio) == 1) {
   message(paste("In working directory", working_dir))
 
   user_id <- 4L
-  user_dir <- file.path(working_dir, "user_results")
+  user_dir <- normalizePath(file.path(output_dir, "user_results"))
   if (!dir.exists(user_dir)) {
     dir.create(file.path(user_dir, user_id), recursive = TRUE)
   }

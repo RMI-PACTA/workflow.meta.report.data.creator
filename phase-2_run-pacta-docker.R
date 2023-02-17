@@ -118,7 +118,9 @@ while (nrow(this_portfolio) == 1) {
 
   exit_code <- system2(
     command = "docker",
-    args = docker_args
+    args = docker_args,
+    stdout = file.path(working_dir, "stdout"),
+    stderr = file.path(working_dir, "stderr")
   )
 
   # This is outside of "if docker exits cleanly" so that we can inspect

@@ -121,9 +121,6 @@ while (nrow(this_portfolio) == 1) {
   exit_code <- system2(
     command = "docker",
     args = docker_args,
-    stdout = file.path(
-      working_dir, basename(this_portfolio$relpath), "docker-stdout"
-      ),
     stderr = file.path(
       working_dir, basename(this_portfolio$relpath), "docker-stderr"
       ),

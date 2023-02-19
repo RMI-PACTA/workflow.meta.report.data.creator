@@ -121,8 +121,12 @@ while (nrow(this_portfolio) == 1) {
   exit_code <- system2(
     command = "docker",
     args = docker_args,
-    stdout = file.path(working_dir, "stdout"),
-    stderr = file.path(working_dir, "stderr")
+    stdout = file.path(
+      working_dir, basename(this_portfolio$relpath), "docker-stdout"
+      ),
+    stderr = file.path(
+      working_dir, basename(this_portfolio$relpath), "docker-stderr"
+      ),
   )
 
   message("copying files to remote")

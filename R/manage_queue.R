@@ -6,9 +6,11 @@ supplemental_file <- function(
   )
 ){
   path <- file.path(normalizePath(dirname(config_file)), "supplemental", name)
-  if (!dir.exists(dirname(path)){
+
+  if (!dir.exists(dirname(path))) {
     dir.create(dirname(path))
   }
+
   if (!file.exists(path)) {
     file.create(path)
   }

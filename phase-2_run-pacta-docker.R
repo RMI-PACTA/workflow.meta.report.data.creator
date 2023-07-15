@@ -7,6 +7,8 @@ source(here("R", "manage_queue.R"))
 config_file <- commandArgs(trailingOnly = TRUE)
 cfg <- config::get(file = config_file)
 queue_db <-file.path(normalizePath(dirname(config_file)), "queue.sqlite")
+# sleep to avoid a bunch of machines connecting at the same time
+Sys.sleep(runif(1) * 300)
 portfolio_queue <- ensure_queue("portfolio", queue_db)
 
 if (is.null(cfg$output_dir)) {

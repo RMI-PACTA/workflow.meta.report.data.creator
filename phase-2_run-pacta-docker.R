@@ -1,13 +1,16 @@
 library("tibble")
 library("here")
-library("txtq")
+library("AzureQstor")
 
 source(here("R", "manage_queue.R"))
 source(here("R", "detect_pacta_directories.R"))
 
 config_file <- commandArgs(trailingOnly = TRUE)
 cfg <- config::get(file = config_file)
-queue <- txtq(file.path(normalizePath(dirname(config_file)), "queue"))
+
+
+endp <- queue_endpoint(cfg$endpoint_url, sas = cfg$sas_token)
+queue <- storage_queue(endp, cfg$queue_name)
 
 if (is.null(cfg$output_dir)) {
   cfg$output_dir <- normalizePath(dirname(config_file))
@@ -29,30 +32,23 @@ if (is.null(cfg$run_reports)) {
   cfg$run_reports <- TRUE
 }
 
-
-if (queue$count() == 0L) {
-
-  # message(paste("Creating queue file:", cfg$queue_file))
-
-  # TODO: queue creation code
-}
-
 #register_runner
 write_supplemental(
-  prepare_queue_message(NA, NA, "register"),
-  queue
+  prepare_queue_message(NA, NA, "register")
 )
 
-this_portfolio <- parse_queue_message(queue$pop()$message)
-while (nrow(this_portfolio) == 1) {
+msg <- queue$get_message()
+
+while (!is.null(msg$text)) {
+  msg$update(cfg$timeout) # prevent from resurfacing before portfolio has time to run
+  this_portfolio <- parse_queue_message(msg$text)
 
   write_supplemental(
     contents = prepare_queue_message(
       relpath = this_portfolio$relpath,
       portfolio_name_ref_all = this_portfolio$portfolio_name_ref_all,
       status = "running"
-      ),
-    queue = queue
+      )
   )
 
   working_dir <- tempdir()
@@ -158,12 +154,12 @@ while (nrow(this_portfolio) == 1) {
       relpath = this_portfolio$relpath,
       portfolio_name_ref_all = this_portfolio$portfolio_name_ref_all,
       status = exit_status
-      ),
-    queue = queue
+      )
   )
+  msg$delete()
 
   #actually get the next item
-  this_portfolio <- parse_queue_message(queue$pop()$message)
+  msg <- queue$get_message()
 }
 
 #deregister_runner

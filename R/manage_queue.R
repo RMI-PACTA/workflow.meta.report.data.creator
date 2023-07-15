@@ -32,3 +32,19 @@ parse_queue_message <- function(message){
   )
   return(out)
 }
+
+interrogate_queue <- function(queue_db, table_name = "qqportfolio"){
+  con <- DBI::dbConnect(
+    RSQLite::SQLite(),
+    queue_db
+  )
+  queue_table <- dplyr::collect(
+    dplyr::tbl(con, table_name)
+  )
+  DBI::dbDisconnect(con)
+  messages <- parse_queue_message(queue_table[["message"]])
+  messages[["queue_status"]] <- queue_table[["status"]]
+  return(messages)
+}
+
+foo <- interrogate_queue("/mnt/rawdata2/MFM2023/queue.sqlite")

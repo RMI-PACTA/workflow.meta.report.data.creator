@@ -34,11 +34,11 @@ if (is.null(cfg$run_reports)) {
 
 #register_runner
 write_supplemental(
-  prepare_queue_message(NA, NA, "register"),
-  queue
+  prepare_queue_message(NA, NA, "register")
 )
 
 msg <- queue$get_message()
+
 while (!is.null(msg$text)) {
   msg$update(cfg$timeout) # prevent from resurfacing before portfolio has time to run
   this_portfolio <- parse_queue_message(msg$text)
@@ -48,8 +48,7 @@ while (!is.null(msg$text)) {
       relpath = this_portfolio$relpath,
       portfolio_name_ref_all = this_portfolio$portfolio_name_ref_all,
       status = "running"
-      ),
-    queue = queue
+      )
   )
 
   working_dir <- tempdir()
@@ -155,8 +154,7 @@ while (!is.null(msg$text)) {
       relpath = this_portfolio$relpath,
       portfolio_name_ref_all = this_portfolio$portfolio_name_ref_all,
       status = exit_status
-      ),
-    queue = queue
+      )
   )
   msg$delete()
 

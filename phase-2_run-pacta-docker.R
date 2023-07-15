@@ -167,7 +167,7 @@ while (!is.null(msg)) {
 
 publish(
   queue = supplemental,
-  title = "register",
+  title = "deregister",
   message = prepare_queue_message(NA, NA, "deregister")
 )
 

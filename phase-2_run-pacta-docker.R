@@ -35,8 +35,8 @@ if (is.null(cfg$run_reports)) {
 supplemental <- ensure_queue("supplemental", queue_db)
 publish(
   queue = supplemental,
-  title = "register",
-  message = prepare_queue_message(NA, NA, "register")
+  title = prepare_queue_message(NA, NA, "register"),
+  message = "register"
 )
 
 msg <- try_consume(portfolio_queue)
@@ -45,8 +45,8 @@ while (!is.null(msg)) {
 
   publish(
     queue = supplemental,
-    title = "running",
-    message = prepare_queue_message(
+    message = "running",
+    title = prepare_queue_message(
       relpath = this_portfolio$relpath,
       portfolio_name_ref_all = this_portfolio$portfolio_name_ref_all,
       status = "running"
@@ -155,8 +155,8 @@ while (!is.null(msg)) {
 
   publish(
     queue = supplemental,
-    title = exit_status,
-    message = prepare_queue_message(
+    message = exit_status,
+    title = prepare_queue_message(
       relpath = this_portfolio$relpath,
       portfolio_name_ref_all = this_portfolio$portfolio_name_ref_all,
       status = exit_status
@@ -169,7 +169,7 @@ while (!is.null(msg)) {
 
 publish(
   queue = supplemental,
-  title = "deregister",
-  message = prepare_queue_message(NA, NA, "deregister")
+  message = "deregister",
+  title = prepare_queue_message(NA, NA, "deregister")
 )
 

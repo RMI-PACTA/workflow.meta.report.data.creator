@@ -1,13 +1,13 @@
 library("tibble")
 library("here")
-library("txtq")
+library("liteq")
 
 source(here("R", "manage_queue.R"))
-source(here("R", "detect_pacta_directories.R"))
 
 config_file <- commandArgs(trailingOnly = TRUE)
 cfg <- config::get(file = config_file)
-queue <- txtq(file.path(normalizePath(dirname(config_file)), "queue"))
+queue_db <-file.path(normalizePath(dirname(config_file)), "queue.sqlite")
+portfolio_queue <- ensure_queue("portfolio", queue_db)
 
 if (is.null(cfg$output_dir)) {
   cfg$output_dir <- normalizePath(dirname(config_file))
@@ -30,29 +30,25 @@ if (is.null(cfg$run_reports)) {
 }
 
 
-if (queue$count() == 0L) {
-
-  # message(paste("Creating queue file:", cfg$queue_file))
-
-  # TODO: queue creation code
-}
-
-#register_runner
-write_supplemental(
-  prepare_queue_message(NA, NA, "register"),
-  queue
+supplemental <- ensure_queue("supplemental", queue_db)
+publish(
+  queue = supplemental,
+  title = "register",
+  message = prepare_queue_message(NA, NA, "register")
 )
 
-this_portfolio <- parse_queue_message(queue$pop()$message)
-while (nrow(this_portfolio) == 1) {
+msg <- try_consume(portfolio_queue)
+while (!is.null(msg)) {
+  this_portfolio <- parse_queue_message(msg$message)
 
-  write_supplemental(
-    contents = prepare_queue_message(
+  publish(
+    queue = supplemental,
+    title = "running",
+    message = prepare_queue_message(
       relpath = this_portfolio$relpath,
       portfolio_name_ref_all = this_portfolio$portfolio_name_ref_all,
       status = "running"
-      ),
-    queue = queue
+    )
   )
 
   working_dir <- tempdir()
@@ -145,30 +141,33 @@ while (nrow(this_portfolio) == 1) {
   if (exit_code == 0L) {
 
     exit_status <- "done"
+    ack(msg)
 
     if (!dir.exists(working_dir)) {
       unlink(working_dir, recursive = TRUE)
     }
   } else {
     exit_status <- paste("Failed (", exit_code, ")")
+    nack(msg)
   }
 
-  write_supplemental(
-    contents = prepare_queue_message(
+  publish(
+    queue = supplemental,
+    title = exit_status,
+    message = prepare_queue_message(
       relpath = this_portfolio$relpath,
       portfolio_name_ref_all = this_portfolio$portfolio_name_ref_all,
       status = exit_status
-      ),
-    queue = queue
+      )
   )
 
   #actually get the next item
-  this_portfolio <- parse_queue_message(queue$pop()$message)
+  msg <- try_consume(portfolio_queue)
 }
 
-#deregister_runner
-write_supplemental(
-  prepare_queue_message(NA, NA, "deregister"),
-  queue
+publish(
+  queue = supplemental,
+  title = "deregister",
+  message = prepare_queue_message(NA, NA, "deregister")
 )
 

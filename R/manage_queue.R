@@ -46,5 +46,3 @@ interrogate_queue <- function(queue_db, table_name = "qqportfolio"){
   messages[["queue_status"]] <- queue_table[["status"]]
   return(messages)
 }
-
-foo <- interrogate_queue("/mnt/rawdata2/MFM2023/queue.sqlite")

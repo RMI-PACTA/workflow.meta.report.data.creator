@@ -1,5 +1,9 @@
 # Meta Report Data Creator
 
+[![Project Status: Unsupported – The project has reached a stable, usable state but the author(s) have ceased all work on it. A new maintainer may be desired.](https://www.repostatus.org/badges/latest/unsupported.svg)](https://www.repostatus.org/#unsupported)
+
+**This project is archived for future reference, but no new work is expected in this repository. Future work is expected to be based off [`workflow.pacta`](https://github.com/RMI-PACTA/workflow.pacta).**
+
 ## Instructions
 
 In each of the R files (`phase-1`, `pahse-2`, and `phase-3`), update the lines defining:

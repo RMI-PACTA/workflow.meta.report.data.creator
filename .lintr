@@ -1,0 +1,5 @@
+linters: all_linters(
+  extraction_operator_linter = NULL,
+  implicit_integer_linter = NULL,
+  object_length_linter = object_length_linter(40L)
+  )

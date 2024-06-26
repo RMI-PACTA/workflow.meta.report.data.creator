@@ -280,7 +280,8 @@ for (user_id in all_user_ids) {
   investor_name <- encodeString(as.character(unique(user_data$investor_name)))
   if (length(investor_name) > 1) {
     investor_name <- investor_name[[1]]
-    user_data <- user_data |> mutate(investor_name = .env$investor_name)
+    user_data <- user_data |>
+      dplyr::mutate(investor_name = .env$investor_name)
   }
 
   user_data <- user_data |>

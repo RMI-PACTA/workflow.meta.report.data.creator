@@ -92,15 +92,6 @@ if (is.null(users_to_ignore)) {
 }
 
 
-# prepare a list of all the CSVs to import -------------------------------------
-
-portfolio_csvs <- list.files(
-  portfolios_path,
-  pattern = "[.]csv$",
-  full.names = TRUE
-)
-
-
 # read in meta data CSVs -------------------------------------------------------
 
 logger::log_info("Reading metadata files.")

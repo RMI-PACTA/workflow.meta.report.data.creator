@@ -209,6 +209,8 @@ logger::log_debug("Saving full portfolio object")
 saveRDS(data, file.path(output_dir, paste0(project_prefix, "_full.rds")))
 
 
+portfolios_to_queue <- list()
+
 # prepare meta PACTA project ---------------------------------------------------
 
 logger::log_info("Preparing meta PACTA directory")
@@ -262,6 +264,18 @@ yaml::write_yaml(
     paste0(project_prefix, "_meta", "_PortfolioParameters.yml")
   )
 )
+
+if ("meta" %in% cfg[["run_categories"]]) {
+  portfolios_to_queue <- append(
+    portfolios_to_queue,
+    list(
+      list(
+        path = meta_output_dir,
+        name = paste0(project_prefix, "_meta")
+      )
+    )
+  )
+}
 
 # slices for per user_id -------------------------------------------------------
 
@@ -346,6 +360,18 @@ for (user_id in all_user_ids) {
       )
     )
 
+    if ("user_id" %in% cfg[["run_categories"]]) {
+      portfolios_to_queue <- append(
+        portfolios_to_queue,
+        list(
+          list(
+            path = user_id_output_dir,
+            name = paste0(project_prefix, "_user_", user_id)
+          )
+        )
+      )
+    }
+
 }
 
 
@@ -420,6 +446,18 @@ for (org_type in all_org_types) {
         paste0(project_prefix, "_org_", org_type, ".csv")
       )
     )
+
+    if ("organization_type" %in% cfg[["run_categories"]]) {
+      portfolios_to_queue <- append(
+        portfolios_to_queue,
+        list(
+          list(
+            path = org_type_output_dir,
+            name = paste0(project_prefix, "_org_", org_type)
+          )
+        )
+      )
+    }
 
 }
 
@@ -514,4 +552,54 @@ for (port_id in all_port_ids) {
         paste0(project_prefix, "_port_", port_id, ".csv")
       )
     )
+
+    if ("port_id" %in% cfg[["run_categories"]]) {
+      portfolios_to_queue <- append(
+        portfolios_to_queue,
+        list(
+          list(
+            path = port_id_output_dir,
+            name = paste0(project_prefix, "_port_", port_id)
+          )
+        )
+      )
+    }
+
+}
+
+logger::log_info("Portfolios prepared.")
+
+
+logger::log_info("preparing storage endpoint")
+storage_endpoint <- AzureStor::storage_endpoint(
+  "https://pactadatadev.blob.core.windows.net",
+  sas = Sys.getenv("STORAGE_ACCOUNT_SAS")
+)
+
+container <- AzureStor::blob_container(storage_endpoint, tolower(project_code))
+
+logger::log_info("Uploading files.")
+file_list <- list.files(recursive = TRUE, full.names = FALSE)
+AzureStor::multiupload_blob(
+  container = container,
+  src = file_list,
+  dest = file_list,
+  recursive = TRUE
+)
+
+logger::log_info("Accessing queue")
+queue_endpoint <- AzureStor::storage_endpoint(
+  "https://pactadatadev.queue.core.windows.net",
+  sas = Sys.getenv("STORAGE_ACCOUNT_SAS")
+)
+
+queue <- AzureQstor::storage_queue(
+  queue_endpoint,
+  tolower(project_code)
+)
+
+for (x in portfolios_to_queue) {
+  logger::log_info("Queueing {x$name}")
+  json_string <- jsonlite::toJSON(x)
+  queue[["put"]](json_string)
 }

@@ -6,6 +6,33 @@
 
 ## Instructions
 
+1. Download the thinitiavtive Download package from the CTM platform, and unzip it.
+2. Prepare a `config.yml` file, by filling out `template.yml`
+3. Prepare the docker image:
+  Adjust the `FROM` line to point to whatever recent docker image you need it to be based on, then:
+  ```sh
+  az acr login -n transitionmonitordockerregistry
+  docker build .
+  ```
+4. Prepare the SAS
+5. `export STORAGE_ACCOUNT_SAS`
+6. Run phase 1
+7. Deploy
+
+```sh
+az deployment group create \
+  --resource-group "$RESOURCEGROUP" \
+  --template-file azure-deploy.with-db.json \
+  --parameters azure-deploy.with-db.rmi-pacta.parameters.json
+```
+
+
+### Generating the SAS
+
+Generate an SAS for the storage account. It gets passed to the Azure Deploy Script.
+An expiration time of ~ 72 hours should be enough to handle most projects.
+
+
 In each of the R files (`phase-1`, `pahse-2`, and `phase-3`), update the lines defining:
 
 * `data_path <- <path to unzipped directory from constructiva>`

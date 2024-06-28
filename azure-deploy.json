@@ -1,0 +1,118 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "0.0.0.5",
+
+  "parameters": {
+    "containerGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the container group."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "identity": {
+      "type": "string",
+      "defaultValue": "/subscriptions/feef729b-4584-44af-a0f9-4827075512f9/resourceGroups/RMI-SP-PACTA-DEV/providers/Microsoft.ManagedIdentity/userAssignedIdentities/pacta-runner-dev",
+      "metadata": {
+        "description": "The ID of the user assigned identity to use for the container group."
+      }
+    },
+    "StorageAccountSAS": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SAS for Storacge Account"
+      }
+    },
+    "projectCode": {
+      "type": "string",
+      "metadata": {
+        "description": "project code to use for accessing portfolios and queue"
+      }
+    },
+    "logWorkspaceId": {
+      "type": "string",
+      "metadata": {
+        "description": "The ID for a Log Analytics Workspace."
+      }
+    },
+    "logWorkspaceKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The key for a Log Analytics Workspace."
+      }
+    }
+  },
+
+  "variables": {
+  },
+
+  "functions": [],
+
+  "resources": [
+
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2021-09-01",
+      "name": "[parameters('containerGroupName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[parameters('identity')]": {}
+        }
+      },
+      "properties": {
+        "diagnostics": {
+          "logAnalytics": {
+            "logType": "ContainerInstanceLogs",
+            "workspaceId": "[parameters('logWorkspaceId')]",
+            "workspaceKey": "[parameters('logWorkspaceKey')]"
+          }
+        },
+        "containers": [
+          {
+            "name": "loader-runner",
+            "properties": {
+              "image": "transitionmonitordockerregistry.azurecr.io/rmi_pacta_2023q4_pa2024ch:20240627T005650Z",
+              "command": [
+                "tail", "-f", "/dev/null"
+              ],
+              "ports": [],
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGB": 16
+                }
+              },
+              "environmentVariables": [
+                {
+                  "name": "PROJECT_CODE",
+                  "secureValue": "[parameters('projectCode')]"
+                },
+                {
+                  "name": "STORAGE_ACCOUNT_SAS",
+                  "secureValue": "[parameters('StorageAccountSAS')]"
+                }
+              ]
+            }
+          }
+        ],
+        "imageRegistryCredentials": [
+          {
+            "server":"transitionmonitordockerregistry.azurecr.io",
+            "identity":"[parameters('identity')]"
+          }
+        ],
+        "restartPolicy": "OnFailure",
+        "osType": "Linux"
+      }
+    }
+  ],
+  "outputs": {}
+}

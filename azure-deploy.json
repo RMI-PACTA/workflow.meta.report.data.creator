@@ -23,6 +23,12 @@
         "description": "The ID of the user assigned identity to use for the container group."
       }
     },
+    "runnerCount": {
+      "type": "int",
+      "metadata": {
+        "description": "How many runners to deploy"
+      }
+    },
     "storageAccountSAS": {
       "type": "securestring",
       "metadata": {
@@ -70,8 +76,12 @@
 
     {
       "type": "Microsoft.ContainerInstance/containerGroups",
+      "copy": {
+        "name": "containerGroupCopy",
+        "count": "[parameters('runnerCount')]"
+      },
       "apiVersion": "2021-09-01",
-      "name": "[parameters('containerGroupName')]",
+      "name": "[concat(parameters('containerGroupName'), '-runner-', copyIndex())]",
       "location": "[parameters('location')]",
       "identity": {
         "type": "UserAssigned",

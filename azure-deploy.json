@@ -92,9 +92,6 @@
             "name": "loader-runner",
             "properties": {
               "image": "[concat('transitionmonitordockerregistry.azurecr.io/workflow.meta.report.data.creator:', parameters('dockerImageTag'))]",
-              "command": [
-                "tail", "-f", "/dev/null"
-              ],
               "ports": [],
               "resources": {
                 "requests": {

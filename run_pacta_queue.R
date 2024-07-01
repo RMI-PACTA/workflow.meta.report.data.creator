@@ -47,7 +47,7 @@ working_dir_path <- "/bound/working_dir"
 while (!is.null(msg$text)) {
 
   logger::log_info("Extending timeout for message")
-  logger::log_info("Message text: ", msg$text)
+  logger::log_info("Message text: {msg$text}")
   msg$update(cfg$timeout) # prevent from resurfacing before portfolio has time to run
 
   message_body <- jsonlite::fromJSON(msg$text)

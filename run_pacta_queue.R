@@ -2,11 +2,15 @@ logger::log_info("Starting run_pacta_queue.R")
 
 logger::log_info("preparing storage endpoint")
 storage_endpoint <- AzureStor::storage_endpoint(
-  "https://pactadatadev.blob.core.windows.net",
+  paste0(
+    "https://",
+    Sys.getenv("STORAGE_ACCOUNT_NAME"),
+    ".blob.core.windows.net"
+  ),
   sas = Sys.getenv("STORAGE_ACCOUNT_SAS")
 )
 
-project_code <- "Sys.getenv('PROJECT_CODE')"
+project_code <- tolower(Sys.getenv("PROJECT_CODE"))
 container <- AzureStor::blob_container(storage_endpoint, project_code)
 
 local_config_path <- "config.yml"
@@ -22,7 +26,11 @@ cfg <- config::get(file = local_config_path)
 
 logger::log_info("Accessing queue")
 queue_endpoint <- AzureStor::storage_endpoint(
-  "https://pactadatadev.queue.core.windows.net",
+  paste0(
+    "https://",
+    Sys.getenv("STORAGE_ACCOUNT_NAME"),
+    ".queue.core.windows.net"
+  ),
   sas = Sys.getenv("STORAGE_ACCOUNT_SAS")
 )
 
@@ -39,6 +47,7 @@ working_dir_path <- "/bound/working_dir"
 while (!is.null(msg$text)) {
 
   logger::log_info("Extending timeout for message")
+  logger::log_info("Message text: ", msg$text)
   msg$update(cfg$timeout) # prevent from resurfacing before portfolio has time to run
 
   message_body <- jsonlite::fromJSON(msg$text)
@@ -61,7 +70,6 @@ while (!is.null(msg$text)) {
       script = "/bound/web_tool_script_1.R",
       wd = "/bound",
       cmdargs = message_body$name,
-      echo = TRUE,
       stderr = file.path(working_dir_path, "web_tool_script_1_stderr.txt")
     )
 
@@ -71,7 +79,7 @@ while (!is.null(msg$text)) {
       script = "/bound/web_tool_script_2.R",
       wd = "/bound",
       cmdargs = message_body$name,
-      stderr = "2>&1"
+      stderr = file.path(working_dir_path, "web_tool_script_2_stderr.txt")
     )
   }
 
@@ -80,10 +88,17 @@ while (!is.null(msg$text)) {
     callr::rscript(
       script = "/bound/web_tool_script_3.R",
       wd = "/bound",
-      cmdargs = message_body$name
+      cmdargs = message_body$name,
+      stderr = file.path(working_dir_path, "web_tool_script_3_stderr.txt")
     )
   }
 
+  logger::log_info("Uploading files to blob")
+  AzureStor::multiupload_blob(
+    container = container,
+    src = list.files(working_dir_path, full.names = TRUE, recursive = TRUE),
+    dest = file.path(message_body$path, list.files(working_dir_path, recursive = TRUE, full.names = FALSE)),
+  )
 
   logger::log_info("marking message as finished")
   msg$delete()

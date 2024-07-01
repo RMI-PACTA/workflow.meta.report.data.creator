@@ -23,10 +23,16 @@
         "description": "The ID of the user assigned identity to use for the container group."
       }
     },
-    "StorageAccountSAS": {
+    "storageAccountSAS": {
       "type": "securestring",
       "metadata": {
         "description": "SAS for Storacge Account"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage Account name for blobs and queue"
       }
     },
     "projectCode": {
@@ -96,8 +102,12 @@
                   "secureValue": "[parameters('projectCode')]"
                 },
                 {
+                  "name": "STORAGE_ACCOUNT_NAME",
+                  "secureValue": "[parameters('storageAccountName')]"
+                },
+                {
                   "name": "STORAGE_ACCOUNT_SAS",
-                  "secureValue": "[parameters('StorageAccountSAS')]"
+                  "secureValue": "[parameters('storageAccountSAS')]"
                 }
               ]
             }

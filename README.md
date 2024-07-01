@@ -6,17 +6,12 @@
 
 ## Instructions
 
-1. Download the thinitiavtive Download package from the CTM platform, and unzip it.
+1. Download the the initiavtive Download package from the CTM platform, and unzip it.
 2. Prepare a `config.yml` file, by filling out `template.yml`
-3. Prepare the docker image:
-  Adjust the `FROM` line to point to whatever recent docker image you need it to be based on, then:
-  ```sh
-  az acr login -n transitionmonitordockerregistry
-  docker build .
-  ```
+3. Prepare the docker image
 4. Prepare the SAS
 5. `export STORAGE_ACCOUNT_SAS`
-6. Run phase 1
+6. Run phase 1 script
 7. Deploy
 
 ```sh
@@ -41,27 +36,30 @@ Take note of the tag generated for use during the deploy step.
 Generate an SAS for the storage account. It gets passed to the Azure Deploy Script.
 An expiration time of ~ 72 hours should be enough to handle most projects.
 
-### Deploy
+### Phase 1
 
-In each of the R files (`phase-1`, `pahse-2`, and `phase-3`), update the lines defining:
+from the directory containing the unzipped initiative package and `config.yml`
 
-* `data_path <- <path to unzipped directory from constructiva>`
-* `output_dir <- <path to where meta results will live>`
+**WARNING:** Make sure that the `STORAGE_ACCOUNT_SAS` envvar is available to the Rscript environment. (`export STORAGE_ACCOUNT_SAS="blahblahblah"`)
 
-Then run 
 ```bash
-Rscript phase-1_combine-portfolios.R
+Rscript /path/to/script/phase-1_combine-portfolios.R config.yml
 ```
 
-If you encounter errors, you will need to modify the portfolio `csv` files to correct the errors.
+This takes a few minutes for a reasonable-sized project (a few thousand portfolios).
 
+### Deploy (phase 2)
 
-Then run 
-```bash
-Rscript phase-2_run-pacta.R
+```sh
+az deployment group create \
+  --resource-group "RMI-SP-PACTA-DEV" \
+  --template-file azure-deploy.json \
+  --parameters azure-deploy.parameters.json
 ```
 
-which takes a long time.
+Answer the questions that `az` provides with the values noted later.
+
+### Phase 3
 
 ```bash
 Rscript phase-3_combine-results.R

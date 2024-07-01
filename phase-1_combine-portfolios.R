@@ -360,17 +360,17 @@ for (user_id in all_user_ids) {
       )
     )
 
-    if ("user_id" %in% cfg[["run_categories"]]) {
-      portfolios_to_queue <- append(
-        portfolios_to_queue,
+  if ("user_id" %in% cfg[["run_categories"]]) {
+    portfolios_to_queue <- append(
+      portfolios_to_queue,
+      list(
         list(
-          list(
-            path = user_id_output_dir,
-            name = paste0(project_prefix, "_user_", user_id)
-          )
+          path = user_id_output_dir,
+          name = paste0(project_prefix, "_user_", user_id)
         )
       )
-    }
+    )
+  }
 
 }
 
@@ -572,24 +572,35 @@ logger::log_info("Portfolios prepared.")
 
 logger::log_info("preparing storage endpoint")
 storage_endpoint <- AzureStor::storage_endpoint(
-  "https://pactadatadev.blob.core.windows.net",
+  paste0(
+    "https://",
+    cfg[["storage_account_name"]],
+    ".blob.core.windows.net"
+  ),
   sas = Sys.getenv("STORAGE_ACCOUNT_SAS")
 )
 
 container <- AzureStor::blob_container(storage_endpoint, tolower(project_code))
 
+# using for loop to avoid timeout from upload.
 logger::log_info("Uploading files.")
 file_list <- list.files(recursive = TRUE, full.names = FALSE)
-AzureStor::multiupload_blob(
-  container = container,
-  src = file_list,
-  dest = file_list,
-  recursive = TRUE
-)
+for (x in file_list) {
+  logger::log_trace("Uploading {x}")
+  AzureStor::upload_blob(
+    container = container,
+    src = x,
+    dest = x
+  )
+}
 
 logger::log_info("Accessing queue")
 queue_endpoint <- AzureStor::storage_endpoint(
-  "https://pactadatadev.queue.core.windows.net",
+  paste0(
+    "https://",
+    cfg[["storage_account_name"]],
+    ".queue.core.windows.net"
+  ),
   sas = Sys.getenv("STORAGE_ACCOUNT_SAS")
 )
 

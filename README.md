@@ -21,10 +21,19 @@
 
 ```sh
 az deployment group create \
-  --resource-group "$RESOURCEGROUP" \
-  --template-file azure-deploy.with-db.json \
-  --parameters azure-deploy.with-db.rmi-pacta.parameters.json
+  --resource-group "RMI-SP-PACTA-DEV" \
+  --template-file azure-deploy.json \
+  --parameters azure-deploy.parameters.json
 ```
+
+### Preparing the Docker image:
+
+1. `az acr login -n transitionmonitordockerregistry`
+2. Update `Dockerfile`'s `FROM` line to use the appropriate tag of the `workflow.transition.monitor` docker image (should be a private image, including data).
+3. `docker build . -t "transitionmonitordockerregistry.azurecr.io/workflow.meta.report.data.creator:$(date +'%Y%m%dT%H%M')"`
+4. `docker push` the image you just built
+
+Take note of the tag generated for use during the deploy step.
 
 
 ### Generating the SAS
@@ -32,6 +41,7 @@ az deployment group create \
 Generate an SAS for the storage account. It gets passed to the Azure Deploy Script.
 An expiration time of ~ 72 hours should be enough to handle most projects.
 
+### Deploy
 
 In each of the R files (`phase-1`, `pahse-2`, and `phase-3`), update the lines defining:
 

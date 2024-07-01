@@ -6,8 +6,9 @@ RUN Rscript -e "\
     'AzureQstor', \
     'AzureStor', \
     'callr', \
-    'logger', \
+    'logger' \
   )); \
   "
 
 COPY run_pacta_queue.R /run_pacta_queue.R
+CMD ["Rscript", "/run_pacta_queue.R"]

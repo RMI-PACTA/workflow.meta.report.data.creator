@@ -600,6 +600,6 @@ queue <- AzureQstor::storage_queue(
 
 for (x in portfolios_to_queue) {
   logger::log_info("Queueing {x$name}")
-  json_string <- jsonlite::toJSON(x)
-  queue[["put"]](json_string)
+  json_string <- jsonlite::toJSON(x, auto_unbox = TRUE)
+  queue[["put_message"]](json_string)
 }

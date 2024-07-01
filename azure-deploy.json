@@ -41,6 +41,12 @@
         "description": "project code to use for accessing portfolios and queue"
       }
     },
+    "dockerImageTag": {
+      "type": "string",
+      "metadata": {
+        "description": "Tag for docker image to deploy"
+      }
+    },
     "logWorkspaceId": {
       "type": "string",
       "metadata": {
@@ -85,7 +91,7 @@
           {
             "name": "loader-runner",
             "properties": {
-              "image": "transitionmonitordockerregistry.azurecr.io/rmi_pacta_2023q4_pa2024ch:20240627T005650Z",
+              "image": "[concat('transitionmonitordockerregistry.azurecr.io/workflow.meta.report.data.creator:', parameters('dockerImageTag'))]",
               "command": [
                 "tail", "-f", "/dev/null"
               ],

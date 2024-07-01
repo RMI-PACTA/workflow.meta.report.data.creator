@@ -31,16 +31,28 @@ az deployment group create \
 Take note of the tag generated for use during the deploy step.
 
 
-### Generating the SAS
+### Preparing Storage Account and Generating the SAS
+
+From an existing Azure Storage Account (in this example, `pactaportfolios`), create a Queue and a Blob Container with the `project_name` in lowercase (e.g. `pa2024ch`, not `PA2024CH`).
+
+Then under "Security + Networking" / "Shared Access signature", generate an SAS with the following permissions:
+
+- Allowed Services: `Blob`, `Queue`
+- Allowed Resource Types: `Container`, `Object`
+- Allwed Permissions: `Read`, `Write`, `List`, `Add`, `Create`, `Update`, `Process`
 
 Generate an SAS for the storage account. It gets passed to the Azure Deploy Script.
 An expiration time of ~ 72 hours should be enough to handle most projects.
+
+Copy the SAS token (starts with `sv=`) somewhere safe.
 
 ### Phase 1
 
 from the directory containing the unzipped initiative package and `config.yml`
 
 **WARNING:** Make sure that the `STORAGE_ACCOUNT_SAS` envvar is available to the Rscript environment. (`export STORAGE_ACCOUNT_SAS="blahblahblah"`)
+
+**WARNING:** You may need to add your IP to the fiewall allow rules (under "networking")
 
 ```bash
 Rscript /path/to/script/phase-1_combine-portfolios.R config.yml

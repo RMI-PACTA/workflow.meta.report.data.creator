@@ -111,6 +111,10 @@
               },
               "environmentVariables": [
                 {
+                  "name": "LOG_LEVEL",
+                  "secureValue": "TRACE"
+                },
+                {
                   "name": "PROJECT_CODE",
                   "secureValue": "[parameters('projectCode')]"
                 },

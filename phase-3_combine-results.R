@@ -247,7 +247,7 @@ for (filetype in unique(meta_paths[["filename"]])) {
       dplyr::filter(filepath == file) |>
       dplyr::select(investor_name, portfolio_name)
     this_content <- readRDS(file) |>
-      mutate(
+      dplyr::mutate(
         investor_name = this_meta[["investor_name"]],
         portfolio_name = this_meta[["portfolio_name"]]
       )
@@ -285,7 +285,7 @@ for (filetype in unique(user_paths[["filename"]])) {
       dplyr::filter(filepath == file) |>
       dplyr::select(investor_name, portfolio_name)
     this_content <- readRDS(file) |>
-      mutate(
+      dplyr::mutate(
         investor_name = this_meta[["investor_name"]],
         portfolio_name = this_meta[["portfolio_name"]]
       )
@@ -316,3 +316,12 @@ file.copy(
   to = file.path(combined_output_dir, paste0(project_code, "_peers_bonds_results_portfolio_ind.rds"))
 )
 
+logger::log_info("Uploading combined files.")
+combined_files <- list.files(combined_output_dir, full.names = TRUE, recursive = TRUE)
+AzureStor::multiupload_blob(
+  container,
+  src = combined_files,
+  dest = combined_files
+)
+
+logger::log_info("Done.")

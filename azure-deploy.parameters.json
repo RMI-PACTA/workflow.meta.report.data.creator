@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+
+    "logWorkspaceId": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/feef729b-4584-44af-a0f9-4827075512f9/resourceGroups/RMI-SP-PACTA-DEV/providers/Microsoft.KeyVault/vaults/pacta-vault-dev"
+        },
+        "secretName": "LogWorkspaceID-Dev"
+      }
+    },
+    "logWorkspaceKey": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/feef729b-4584-44af-a0f9-4827075512f9/resourceGroups/RMI-SP-PACTA-DEV/providers/Microsoft.KeyVault/vaults/pacta-vault-dev"
+        },
+        "secretName": "LogWorkspaceKey-Dev"
+      }
+    }
+
+  }
+}

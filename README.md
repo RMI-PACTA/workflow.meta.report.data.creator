@@ -6,25 +6,72 @@
 
 ## Instructions
 
-In each of the R files (`phase-1`, `pahse-2`, and `phase-3`), update the lines defining:
+1. Download the the initiavtive Download package from the CTM platform, and unzip it.
+2. Prepare a `config.yml` file, by filling out `template.yml`
+3. Prepare the docker image
+4. Prepare the SAS
+5. `export STORAGE_ACCOUNT_SAS`
+6. Run phase 1 script
+7. Deploy
 
-* `data_path <- <path to unzipped directory from constructiva>`
-* `output_dir <- <path to where meta results will live>`
-
-Then run 
-```bash
-Rscript phase-1_combine-portfolios.R
+```sh
+az deployment group create \
+  --resource-group "RMI-SP-PACTA-DEV" \
+  --template-file azure-deploy.json \
+  --parameters azure-deploy.parameters.json
 ```
 
-If you encounter errors, you will need to modify the portfolio `csv` files to correct the errors.
+### Preparing the Docker image:
+
+1. `az acr login -n transitionmonitordockerregistry`
+2. Update `Dockerfile`'s `FROM` line to use the appropriate tag of the `workflow.transition.monitor` docker image (should be a private image, including data).
+3. `docker build . -t "transitionmonitordockerregistry.azurecr.io/workflow.meta.report.data.creator:$(date +'%Y%m%dT%H%M')"`
+4. `docker push` the image you just built
+
+Take note of the tag generated for use during the deploy step.
 
 
-Then run 
+### Preparing Storage Account and Generating the SAS
+
+From an existing Azure Storage Account (in this example, `pactaportfolios`), create a Queue and a Blob Container with the `project_name` in lowercase (e.g. `pa2024ch`, not `PA2024CH`).
+
+Then under "Security + Networking" / "Shared Access signature", generate an SAS with the following permissions:
+
+- Allowed Services: `Blob`, `Queue`
+- Allowed Resource Types: `Container`, `Object`
+- Allwed Permissions: `Read`, `Write`, `List`, `Add`, `Create`, `Update`, `Process`
+
+Generate an SAS for the storage account. It gets passed to the Azure Deploy Script.
+An expiration time of ~ 72 hours should be enough to handle most projects.
+
+Copy the SAS token (starts with `sv=`) somewhere safe.
+
+### Phase 1
+
+from the directory containing the unzipped initiative package and `config.yml`
+
+**WARNING:** Make sure that the `STORAGE_ACCOUNT_SAS` envvar is available to the Rscript environment. (`export STORAGE_ACCOUNT_SAS="blahblahblah"`)
+
+**WARNING:** You may need to add your IP to the fiewall allow rules (under "networking")
+
 ```bash
-Rscript phase-2_run-pacta.R
+Rscript /path/to/script/phase-1_combine-portfolios.R config.yml
 ```
 
-which takes a long time.
+This takes a few minutes for a reasonable-sized project (a few thousand portfolios).
+
+### Deploy (phase 2)
+
+```sh
+az deployment group create \
+  --resource-group "RMI-SP-PACTA-DEV" \
+  --template-file azure-deploy.json \
+  --parameters azure-deploy.parameters.json
+```
+
+Answer the questions that `az` provides with the values noted later.
+
+### Phase 3
 
 ```bash
 Rscript phase-3_combine-results.R

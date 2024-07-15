@@ -1,4 +1,4 @@
-FROM transitionmonitordockerregistry.azurecr.io/rmi_pacta_2023q4_pa2024ch:20240703T134002Z
+FROM transitionmonitordockerregistry.azurecr.io/rmi_pacta_2023q4_pa2024ch:20240711T081006Z
 
 # install R package dependencies
 RUN Rscript -e "\

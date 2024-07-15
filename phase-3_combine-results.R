@@ -299,21 +299,26 @@ for (filetype in unique(user_paths[["filename"]])) {
   saveRDS(contents, file.path(user_output_dir, filetype))
 }
 
+pacta_data_dir <- file.path(combined_output_dir, "pacta_data")
+if (!dir.exists(pacta_data_dir)) {
+  dir.create(pacta_data_dir, recursive = TRUE)
+}
+
 file.copy(
   from = file.path(org_output_dir, "Equity_results_portfolio.rds"),
-  to = file.path(combined_output_dir, paste0(project_code, "_peers_equity_results_portfolio.rds"))
+  to = file.path(pacta_data_dir, paste0(project_code, "_peers_equity_results_portfolio.rds"))
 )
 file.copy(
   from = file.path(org_output_dir, "Bonds_results_portfolio.rds"),
-  to = file.path(combined_output_dir, paste0(project_code, "_peers_bonds_results_portfolio.rds"))
+  to = file.path(pacta_data_dir, paste0(project_code, "_peers_bonds_results_portfolio.rds"))
 )
 file.copy(
   from = file.path(user_output_dir, "Equity_results_portfolio.rds"),
-  to = file.path(combined_output_dir, paste0(project_code, "_peers_equity_results_portfolio_ind.rds"))
+  to = file.path(pacta_data_dir, paste0(project_code, "_peers_equity_results_portfolio_ind.rds"))
 )
 file.copy(
   from = file.path(user_output_dir, "Bonds_results_portfolio.rds"),
-  to = file.path(combined_output_dir, paste0(project_code, "_peers_bonds_results_portfolio_ind.rds"))
+  to = file.path(pacta_data_dir, paste0(project_code, "_peers_bonds_results_portfolio_ind.rds"))
 )
 
 logger::log_info("Uploading combined files.")

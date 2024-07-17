@@ -1,21 +1,39 @@
 ---
 default:
-  output_dir: "<absolute_path>"
-  data_path: "<absolute_path_to_raw_portfolios>"
-  queue_file: "<absolute_path>"
-  run_results: true
-  force_results: false
-  run_reports: true
-  force_reports: false
-  project_code: "PA2022XX"
+  # Directory of unzipped initiative package
+  initiative_package_dir: "PA2024CH_2024-06-26"
+  # where to put prepared files
+  output_dir: "output"
+  project_code: "PA2024CH"
+  # storage account with blob container for upload
+  storage_account_name: "pactaportfolios"
+  # Params for portfolios
   default_language: "EN"
-  project_prefix: "PA2022XX"
-  holdings_date: "2021Q4"
-  bogus_csvs_to_be_ignored:
+  project_prefix: "PA2024CH"
+  holdings_date: "2023Q4"
+  # filenames
+  csvs_to_ignore:
   # yaml list
   # - 1
   # - 2
-  users_to_be_ignored:
-  # yaml list
-  # - 1
-  # - 2
+  # Constructiva user IDs
+  users_to_ignore:
+    - 2021  # s.muszynski@constructiva.de
+    - 3296  # nherrera@rmi.org
+    - 3297  # cyetman@rmi.org
+    - 3535  # alalechere@rmi.org
+    - 3671  # r.debusmann@constructiva.de
+    - 4925  # r.debusmann+test@constructiva.de
+    - 4942  # aaxthelm@rmi.org
+  run_categories:
+    # Which groups of portfolio to create results for.
+    # comment out unneeded lines
+    - meta
+    - organization_type
+    - user_id
+    # - port_id
+
+  # Time before portfolio goes back in the queue
+  timeout: 2400 # seconds (40 min)
+  run_results: true
+  run_reports: false

@@ -6,20 +6,27 @@
 
 ## Instructions
 
-1. Download the the initiavtive Download package from the CTM platform, and unzip it.
-2. Prepare a `config.yml` file, by filling out `template.yml`
-3. Prepare the docker image
-4. Prepare the SAS
-5. `export STORAGE_ACCOUNT_SAS`
-6. Run phase 1 script
-7. Deploy
+1. Phase 1: Prepare portfolio files
+    1. Download the the initiavtive Download package from the CTM platform, and unzip it.
+    2. Prepare a `config.yml` file, by filling out `template.yml`
+    3. Prepare the docker image
+    4. Prepare the SAS
+    5. `export STORAGE_ACCOUNT_SAS`
+    6. Run phase 1 script
+2. Phase 2: Run PACTA against portfolios
+    1. Deploy
 
-```sh
-az deployment group create \
-  --resource-group "RMI-SP-PACTA-DEV" \
-  --template-file azure-deploy.json \
-  --parameters azure-deploy.parameters.json
-```
+    ```sh
+    az deployment group create \
+      --resource-group "RMI-SP-PACTA-DEV" \
+      --template-file azure-deploy.json \
+      --parameters azure-deploy.parameters.json
+    ```
+    
+    2. Remove (delete) container groups when finished
+3. Phase 3: Prepare peer files
+    5. `export STORAGE_ACCOUNT_SAS`
+    6. Run phase 3 script
 
 ### Preparing the Docker image:
 
@@ -45,12 +52,13 @@ Generate an SAS for the storage account. It gets passed to the Azure Deploy Scri
 An expiration time of ~ 72 hours should be enough to handle most projects.
 
 Copy the SAS token (starts with `sv=`) somewhere safe.
+You will need it for all three phases of the process.
 
 ### Phase 1
 
 from the directory containing the unzipped initiative package and `config.yml`
 
-**WARNING:** Make sure that the `STORAGE_ACCOUNT_SAS` envvar is available to the Rscript environment. (`export STORAGE_ACCOUNT_SAS="blahblahblah"`)
+**WARNING:** Make sure that the `STORAGE_ACCOUNT_SAS` envvar is available to the Rscript environment. (`export STORAGE_ACCOUNT_SAS="sv=blahblahblah"`)
 
 **WARNING:** You may need to add your IP to the fiewall allow rules (under "networking")
 
@@ -69,7 +77,8 @@ az deployment group create \
   --parameters azure-deploy.parameters.json
 ```
 
-Answer the questions that `az` provides with the values noted later.
+Answer the questions that `az` provides.
+Notably, the SAS can be copy/pasted into the field (but will not show).
 
 ### Phase 3
 
@@ -77,4 +86,5 @@ Answer the questions that `az` provides with the values noted later.
 Rscript phase-3_combine-results.R
 ```
 
-combines the results into peer files (meta + org in one set, user_id in the other)
+combines the results into peer files (meta + org in one set, user_id in the other).
+Again, it needs the SAS available as an envvar to the R session, so that it can download the PACTA results generated in phase 2.

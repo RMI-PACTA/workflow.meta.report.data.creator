@@ -37,3 +37,4 @@ default:
   timeout: 2400 # seconds (40 min)
   run_results: true
   run_reports: false
+  run_mfm: false

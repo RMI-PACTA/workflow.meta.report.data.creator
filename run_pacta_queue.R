@@ -99,6 +99,16 @@ while (!is.null(msg$text)) {
     )
   }
 
+  if (cfg$run_mfm) {
+    logger::log_info("running web_tool_script_3.R")
+    callr::rscript(
+      script = "/bound/web_tool_script_MFM.R",
+      wd = "/bound",
+      cmdargs = message_body$name,
+      stderr = file.path(working_dir_path, "web_tool_script_MFM_stderr.txt")
+    )
+  }
+
   wd_files <- list.files(
     working_dir_path,
     full.names = FALSE,

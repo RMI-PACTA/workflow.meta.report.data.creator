@@ -63,6 +63,12 @@ while (!is.null(msg$text)) {
     recursive = TRUE
   )
 
+  downloaded_files <- list.files(
+    working_dir_path,
+    full.names = FALSE,
+    recursive = TRUE
+  )
+
   if (cfg$run_results) {
 
     logger::log_info("running web_tool_script_1.R")
@@ -93,11 +99,22 @@ while (!is.null(msg$text)) {
     )
   }
 
+  wd_files <- list.files(
+    working_dir_path,
+    full.names = FALSE,
+    recursive = TRUE
+  )
+
+  files_to_upload <- setdiff(
+    wd_files,
+    downloaded_files
+  )
+
   logger::log_info("Uploading files to blob")
   AzureStor::multiupload_blob(
     container = container,
-    src = list.files(working_dir_path, full.names = TRUE, recursive = TRUE),
-    dest = file.path(message_body$path, list.files(working_dir_path, recursive = TRUE, full.names = FALSE)),
+    src = file.path(working_dir_path, files_to_upload),
+    dest = file.path(message_body$path, files_to_upload)
   )
 
   logger::log_info("marking message as finished")

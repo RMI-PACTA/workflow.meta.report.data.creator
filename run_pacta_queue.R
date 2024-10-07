@@ -99,8 +99,14 @@ while (!is.null(msg$text)) {
     )
   }
 
-  if (cfg$run_mfm) {
-    logger::log_info("running web_tool_script_3.R")
+  has_user_errors <- any(
+    basename(
+      list.files(working_dir_path, full.names = TRUE, recursive = TRUE)
+    ) == "user_errors.json"
+  )
+
+  if (cfg$run_mfm && !has_user_errors) {
+    logger::log_info("running web_tool_script_MFM.R")
     callr::rscript(
       script = "/bound/web_tool_script_MFM.R",
       wd = "/bound",
